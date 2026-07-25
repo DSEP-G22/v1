@@ -1,0 +1,17 @@
+# Active model version per role (libs/platform/registry.py stamps artefacts with these).
+roles:
+  asr:
+    impl: faster_whisper
+    model_version: "faster-whisper-base-1.0"
+  vlm:
+    impl: ollama
+    model_version: "llava:7b"
+  llm:
+    impl: ollama
+    model_version: "llama3.1:8b-instruct-q4_K_M"
+  embedder:
+    impl: sentence_transformers
+    model_version: "sentence-transformers/all-MiniLM-L6-v2"
+  classifier:
+    impl: sklearn
+    model_version: "department_clf-20260809104255"

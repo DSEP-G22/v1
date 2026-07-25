@@ -1,0 +1,55 @@
+# ActionRegistryEntry rows for libs/domain/policy/action_selection.py and services/action_svc.
+# `permits` is a small condition object evaluated against the params dict passed to
+# ActionRegistryEntry.permits(params); all listed conditions must hold (implicit AND).
+
+actions:
+  - action_id: "restart_router"
+    department: network_operations
+    description: "Send a remote restart command to the customer's router."
+    faults: ["fault_power_supply", "fault_firmware_crashloop"]
+    params_schema:
+      device_id: "str"
+    permits:
+      requires_fields: ["device_id"]
+    idempotent: true
+
+  - action_id: "run_line_diagnostic"
+    department: network_operations
+    description: "Trigger a remote DSL/fibre line diagnostic."
+    faults: ["fault_line_sync", "fault_intermittent_connection", "fault_no_dial_tone"]
+    params_schema:
+      circuit_id: "str"
+    permits:
+      requires_fields: ["circuit_id"]
+    idempotent: true
+
+  - action_id: "schedule_technician_visit"
+    department: field_service
+    description: "Book a field technician visit within the next available slot."
+    faults: ["fault_hardware", "fault_cabling", "fault_no_dial_tone"]
+    params_schema:
+      address_id: "str"
+      earliest_date: "str"
+    permits:
+      requires_fields: ["address_id", "earliest_date"]
+    idempotent: false
+
+  - action_id: "issue_billing_credit"
+    department: billing
+    description: "Apply a pre-approved service-credit to the customer's account."
+    faults: ["fault_billing_dispute"]
+    params_schema:
+      amount_cents: "int"
+      reason_code: "str"
+    permits:
+      requires_fields: ["amount_cents", "reason_code"]
+      max_amount_cents: 5000
+    idempotent: false
+
+  - action_id: "resend_invoice"
+    department: billing
+    description: "Re-send the most recent invoice to the customer's email on file."
+    faults: ["fault_billing_dispute"]
+    params_schema: {}
+    permits: {}
+    idempotent: true

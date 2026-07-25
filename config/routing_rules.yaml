@@ -1,0 +1,32 @@
+# Evaluated in order by libs/domain/policy/routing.py::evaluate. First matching rule wins;
+# if none match, the classifier's predicted department is used.
+#
+# `when` is a small condition object matched against the TriageResult inputs available at
+# routing time (keyword hits, extracted fields, channel). All listed conditions must hold
+# (implicit AND).
+
+rules:
+  - id: "R-OUTAGE-KEYWORDS"
+    when:
+      keywords_any: ["no internet", "no signal", "network down", "outage", "no dial tone"]
+    department: network_operations
+
+  - id: "R-BILLING-KEYWORDS"
+    when:
+      keywords_any: ["invoice", "overcharged", "refund", "payment failed", "billing"]
+    department: billing
+
+  - id: "R-CANCEL-KEYWORDS"
+    when:
+      keywords_any: ["cancel my subscription", "cancel service", "close my account"]
+    department: retention
+
+  - id: "R-FIELD-VISIT-KEYWORDS"
+    when:
+      keywords_any: ["technician visit", "site visit", "installation appointment", "on-site"]
+    department: field_service
+
+  - id: "R-SALES-KEYWORDS"
+    when:
+      keywords_any: ["upgrade my plan", "new connection", "pricing", "quote"]
+    department: sales

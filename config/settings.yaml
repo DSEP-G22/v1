@@ -1,0 +1,28 @@
+# Profile definitions for APP_PROFILE. Values here are defaults; env vars / .env override them.
+# "stub" forces every *_impl field to a stub regardless of what is listed below (see
+# libs/platform/config.py) — this is the CI profile of SAD §8.2.3.
+
+profiles:
+  stub:
+    asr_impl: stub
+    vlm_impl: stub
+    llm_impl: stub
+    embedder_impl: hash_stub
+    broker: inprocess
+    database_url: "sqlite+pysqlite:///./v1_data/app_stub.db"
+
+  cpu:
+    asr_impl: faster_whisper
+    vlm_impl: ollama
+    llm_impl: ollama
+    embedder_impl: sentence_transformers
+    broker: inprocess
+    database_url: "sqlite+pysqlite:///./v1_data/app.db"
+
+  full:
+    asr_impl: faster_whisper
+    vlm_impl: ollama
+    llm_impl: ollama
+    embedder_impl: sentence_transformers
+    broker: kafka
+    database_url: "sqlite+pysqlite:///./v1_data/app.db"

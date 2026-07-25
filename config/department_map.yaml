@@ -1,0 +1,18 @@
+# Maps Bitext `category` values to project Department enum values (notebooks/01_data_preparation).
+# Bitext has no telecom fault categories at all, so network_operations and field_service are
+# never produced by this map — they only ever come from data/telecom_supplement.csv.
+category_to_department:
+  ORDER: general
+  SHIPPING: general
+  DELIVERY: general
+  REFUND: billing
+  INVOICE: billing
+  PAYMENT: billing
+  CONTACT: general
+  FEEDBACK: general
+  ACCOUNT: technical_support
+  SUBSCRIPTION: technical_support
+  CANCEL: retention
+  # data/telecom_supplement.csv categories (Bitext has no telecom coverage at all):
+  NETWORK: network_operations
+  FIELDSERVICE: field_service

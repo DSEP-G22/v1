@@ -1,0 +1,12 @@
+weights:
+  sentiment: 22
+  urgency_keywords: 15
+  customer_segment: 8
+  outage_scope: 25
+  prior_contacts: 12
+  sla_age: 18
+calibration:
+  method: randomised simplex search, 800 trials, Cohen's kappa vs synthetic labels
+  kappa: 0.7037
+  default_weights_kappa: 0.646
+  sample_size: 200

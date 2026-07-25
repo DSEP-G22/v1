@@ -1,0 +1,167 @@
+# Seed for libs/platform/graph/inmemory.py — labels per SAD Figure 16:
+#   LedState -EVIDENCE_FOR-> Symptom -INDICATES-> Fault -RESOLVED_BY-> Procedure -DEFINED_IN-> Document
+#   Fault -PERMITS-> Action
+#   Fault -ESCALATES_TO-> ResolverQueue
+
+nodes:
+  # LedState
+  - id: "led_red_power"
+    label: "LedState"
+    props: { colour: "red", position: "power", behaviour: "solid" }
+  - id: "led_red_power_blink"
+    label: "LedState"
+    props: { colour: "red", position: "power", behaviour: "blinking" }
+  - id: "led_amber_internet"
+    label: "LedState"
+    props: { colour: "amber", position: "internet", behaviour: "solid" }
+  - id: "led_off_internet"
+    label: "LedState"
+    props: { colour: "off", position: "internet", behaviour: "off" }
+  - id: "led_green_internet_blink"
+    label: "LedState"
+    props: { colour: "green", position: "internet", behaviour: "blinking" }
+
+  # Symptom
+  - id: "symptom_no_power"
+    label: "Symptom"
+    props: { name: "Router will not power on" }
+  - id: "symptom_boot_loop"
+    label: "Symptom"
+    props: { name: "Router stuck rebooting" }
+  - id: "symptom_no_wan_link"
+    label: "Symptom"
+    props: { name: "No WAN link detected" }
+  - id: "symptom_syncing"
+    label: "Symptom"
+    props: { name: "Line still synchronising" }
+  - id: "symptom_intermittent_drop"
+    label: "Symptom"
+    props: { name: "Connection drops intermittently" }
+
+  # Fault
+  - id: "fault_power_supply"
+    label: "Fault"
+    props: { name: "Faulty power supply" }
+  - id: "fault_firmware_crashloop"
+    label: "Fault"
+    props: { name: "Firmware crash loop" }
+  - id: "fault_cabling"
+    label: "Fault"
+    props: { name: "Cabling fault" }
+  - id: "fault_line_sync"
+    label: "Fault"
+    props: { name: "Line synchronisation fault" }
+  - id: "fault_intermittent_connection"
+    label: "Fault"
+    props: { name: "Intermittent connection fault" }
+  - id: "fault_hardware"
+    label: "Fault"
+    props: { name: "Hardware fault requiring on-site repair" }
+  - id: "fault_no_dial_tone"
+    label: "Fault"
+    props: { name: "No dial tone" }
+  - id: "fault_billing_dispute"
+    label: "Fault"
+    props: { name: "Billing dispute" }
+
+  # Procedure
+  - id: "proc_power_cycle"
+    label: "Procedure"
+    props: { name: "Power-cycle the router", steps: "Unplug power for 30s, replug, wait 2 minutes" }
+  - id: "proc_replace_psu"
+    label: "Procedure"
+    props: { name: "Dispatch replacement power supply" }
+  - id: "proc_factory_reset"
+    label: "Procedure"
+    props: { name: "Factory reset router", steps: "Hold reset 10s, reconfigure from backup profile" }
+  - id: "proc_check_cabling"
+    label: "Procedure"
+    props: { name: "Inspect and reseat WAN/coax cabling" }
+  - id: "proc_line_diagnostic"
+    label: "Procedure"
+    props: { name: "Run remote line diagnostic" }
+  - id: "proc_escalate_field"
+    label: "Procedure"
+    props: { name: "Escalate to field service for on-site repair" }
+
+  # Document
+  - id: "doc_sop_router_power"
+    label: "Document"
+    props: { title: "SOP: Router power issues" }
+  - id: "doc_sop_line_sync"
+    label: "Document"
+    props: { title: "SOP: Line synchronisation faults" }
+  - id: "doc_sop_intermittent"
+    label: "Document"
+    props: { title: "SOP: Intermittent connectivity" }
+  - id: "doc_sop_billing"
+    label: "Document"
+    props: { title: "SOP: Billing disputes" }
+
+  # Action
+  - id: "action_restart_router"
+    label: "Action"
+    props: { action_id: "restart_router" }
+  - id: "action_run_line_diagnostic"
+    label: "Action"
+    props: { action_id: "run_line_diagnostic" }
+  - id: "action_schedule_technician_visit"
+    label: "Action"
+    props: { action_id: "schedule_technician_visit" }
+  - id: "action_issue_billing_credit"
+    label: "Action"
+    props: { action_id: "issue_billing_credit" }
+
+  # ResolverQueue
+  - id: "queue_network_operations"
+    label: "ResolverQueue"
+    props: { department: "network_operations" }
+  - id: "queue_field_service"
+    label: "ResolverQueue"
+    props: { department: "field_service" }
+  - id: "queue_billing"
+    label: "ResolverQueue"
+    props: { department: "billing" }
+
+edges:
+  - { from: "led_red_power", type: "EVIDENCE_FOR", to: "symptom_no_power" }
+  - { from: "led_red_power_blink", type: "EVIDENCE_FOR", to: "symptom_boot_loop" }
+  - { from: "led_off_internet", type: "EVIDENCE_FOR", to: "symptom_no_wan_link" }
+  - { from: "led_amber_internet", type: "EVIDENCE_FOR", to: "symptom_syncing" }
+  - { from: "led_green_internet_blink", type: "EVIDENCE_FOR", to: "symptom_intermittent_drop" }
+
+  - { from: "symptom_no_power", type: "INDICATES", to: "fault_power_supply" }
+  - { from: "symptom_boot_loop", type: "INDICATES", to: "fault_firmware_crashloop" }
+  - { from: "symptom_no_wan_link", type: "INDICATES", to: "fault_cabling" }
+  - { from: "symptom_syncing", type: "INDICATES", to: "fault_line_sync" }
+  - { from: "symptom_intermittent_drop", type: "INDICATES", to: "fault_intermittent_connection" }
+
+  - { from: "fault_power_supply", type: "RESOLVED_BY", to: "proc_power_cycle" }
+  - { from: "fault_power_supply", type: "RESOLVED_BY", to: "proc_replace_psu" }
+  - { from: "fault_firmware_crashloop", type: "RESOLVED_BY", to: "proc_factory_reset" }
+  - { from: "fault_cabling", type: "RESOLVED_BY", to: "proc_check_cabling" }
+  - { from: "fault_line_sync", type: "RESOLVED_BY", to: "proc_line_diagnostic" }
+  - { from: "fault_intermittent_connection", type: "RESOLVED_BY", to: "proc_line_diagnostic" }
+  - { from: "fault_hardware", type: "RESOLVED_BY", to: "proc_escalate_field" }
+  - { from: "fault_no_dial_tone", type: "RESOLVED_BY", to: "proc_line_diagnostic" }
+  - { from: "fault_billing_dispute", type: "RESOLVED_BY", to: "proc_check_cabling" } # placeholder pending real billing procedure
+
+  - { from: "proc_power_cycle", type: "DEFINED_IN", to: "doc_sop_router_power" }
+  - { from: "proc_replace_psu", type: "DEFINED_IN", to: "doc_sop_router_power" }
+  - { from: "proc_factory_reset", type: "DEFINED_IN", to: "doc_sop_router_power" }
+  - { from: "proc_check_cabling", type: "DEFINED_IN", to: "doc_sop_line_sync" }
+  - { from: "proc_line_diagnostic", type: "DEFINED_IN", to: "doc_sop_line_sync" }
+  - { from: "proc_escalate_field", type: "DEFINED_IN", to: "doc_sop_intermittent" }
+
+  - { from: "fault_power_supply", type: "PERMITS", to: "action_restart_router" }
+  - { from: "fault_line_sync", type: "PERMITS", to: "action_run_line_diagnostic" }
+  - { from: "fault_intermittent_connection", type: "PERMITS", to: "action_run_line_diagnostic" }
+  - { from: "fault_hardware", type: "PERMITS", to: "action_schedule_technician_visit" }
+  - { from: "fault_no_dial_tone", type: "PERMITS", to: "action_schedule_technician_visit" }
+  - { from: "fault_billing_dispute", type: "PERMITS", to: "action_issue_billing_credit" }
+
+  - { from: "fault_hardware", type: "ESCALATES_TO", to: "queue_field_service" }
+  - { from: "fault_cabling", type: "ESCALATES_TO", to: "queue_field_service" }
+  - { from: "fault_line_sync", type: "ESCALATES_TO", to: "queue_network_operations" }
+  - { from: "fault_intermittent_connection", type: "ESCALATES_TO", to: "queue_network_operations" }
+  - { from: "fault_billing_dispute", type: "ESCALATES_TO", to: "queue_billing" }
