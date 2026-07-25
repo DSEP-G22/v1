@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cst-v1"
+version = "0.1.0"
+description = "Reference implementation of the multimodal customer support triage system (SAD_G22 / SRS_G22)"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.6",
+  "pydantic-settings>=2.2",
+  "fastapi",
+  "uvicorn[standard]",
+  "python-multipart",
+  "SQLAlchemy>=2.0",
+  "httpx",
+  "PyYAML",
+  "numpy",
+  "python-ulid",
+]
+
+[project.optional-dependencies]
+ml = ["scikit-learn", "joblib", "sentence-transformers", "faster-whisper", "Pillow", "pandas", "pypdf"]
+train = ["datasets", "transformers", "peft", "accelerate", "torch", "jupyter", "jiwer", "matplotlib"]
+kafka = ["confluent-kafka"]
+dev = ["pytest", "pytest-asyncio", "ruff", "mypy"]
+
+[tool.setuptools.packages.find]
+include = ["libs*", "services*", "runtime*", "evaluation*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.mypy]
+strict = true
