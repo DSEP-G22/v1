@@ -1,0 +1,8 @@
+The following model output must be valid JSON matching this schema:
+{schema}
+
+The output below is not valid JSON (or does not match the schema). Fix it and return ONLY the
+corrected JSON object, with no surrounding prose or markdown fences.
+
+Broken output:
+{broken_output}

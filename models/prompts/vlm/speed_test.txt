@@ -1,0 +1,11 @@
+Look at this screenshot of a network speed test result. Report only the numbers actually shown.
+
+Extract:
+- Download speed (Mbps), upload speed (Mbps), ping/latency (ms) if shown.
+- The service/app name shown, if any.
+
+Respond as JSON:
+{"summary_text": string, "device_model": null,
+ "led_states": [], "error_codes": [],
+ "numeric_values": {"download_mbps": float, "upload_mbps": float, "ping_ms": float},
+ "confidence": float between 0 and 1}

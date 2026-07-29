@@ -1,0 +1,13 @@
+Look at this photo of a router/modem's LED indicator panel. Report only what is visible — do not
+guess at LEDs that are not clearly shown, and use "unknown" for anything you cannot determine.
+
+Identify:
+- The device model, if legible on the unit.
+- Each visible LED: its label/position (e.g. power, internet, wifi, phone), its colour
+  (red/amber/green/blue/off/unknown), and its behaviour (solid/blinking/off/unknown).
+- Any error codes or numeric displays visible on the unit.
+
+Respond as JSON:
+{"summary_text": string, "device_model": string|null,
+ "led_states": [{"label": string, "colour": string, "behaviour": string}],
+ "error_codes": [string], "numeric_values": {}, "confidence": float between 0 and 1}
