@@ -1,0 +1,39 @@
+{
+  "n_tickets": 100,
+  "n_completed": 100,
+  "n_timed_out": 0,
+  "wall_s": 4.5098371505737305,
+  "throughput_tickets_per_s": 22.173749663505752,
+  "department_accuracy": 0.59,
+  "department_macro_f1": 0.5285546605986556,
+  "fault_top1_accuracy": 0.22916666666666666,
+  "fault_top3_accuracy": 0.22916666666666666,
+  "citation_verification_rate": NaN,
+  "json_validity_rate": 1.0,
+  "stage_latency_ms": {
+    "PROCESSING->AGGREGATED": {
+      "n": 100,
+      "p50_ms": 2625.2174999999997,
+      "p95_ms": 3979.74285,
+      "mean_ms": 2426.11357
+    },
+    "AGGREGATED->TRIAGED": {
+      "n": 100,
+      "p50_ms": 118.059,
+      "p95_ms": 363.1236499999998,
+      "mean_ms": 150.09167
+    },
+    "TRIAGED->DIAGNOSED": {
+      "n": 100,
+      "p50_ms": 97.161,
+      "p95_ms": 430.80760000000004,
+      "mean_ms": 159.15759
+    },
+    "DIAGNOSED->READY_FOR_AGENT": {
+      "n": 100,
+      "p50_ms": 93.423,
+      "p95_ms": 681.34755,
+      "mean_ms": 186.44682
+    }
+  }
+}

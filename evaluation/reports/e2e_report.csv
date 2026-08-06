@@ -1,0 +1,12 @@
+metric,value
+n_tickets,100
+n_completed,100
+n_timed_out,0
+wall_s,4.5098371505737305
+throughput_tickets_per_s,22.173749663505752
+department_accuracy,0.59
+department_macro_f1,0.5285546605986556
+fault_top1_accuracy,0.22916666666666666
+fault_top3_accuracy,0.22916666666666666
+citation_verification_rate,nan
+json_validity_rate,1.0
