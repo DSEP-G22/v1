@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* UI-7: focus must be visible on every interactive element, including when the browser would
+     otherwise suppress it for mouse users. */
+  :focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-blue-700 text-white hover:bg-blue-800;
+  }
+  .btn-secondary {
+    @apply btn border border-slate-300 bg-white text-slate-800 hover:bg-slate-100;
+  }
+  .btn-danger {
+    @apply btn border border-red-300 bg-white text-red-800 hover:bg-red-50;
+  }
+  .card {
+    @apply rounded-lg border border-slate-200 bg-white shadow-sm;
+  }
+  .card-header {
+    @apply flex items-center justify-between border-b border-slate-200 px-4 py-3;
+  }
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .input {
+    @apply w-full rounded-md border border-slate-300 px-3 py-2 text-sm
+           focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600;
+  }
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50
+           focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:shadow;
+  }
+}
