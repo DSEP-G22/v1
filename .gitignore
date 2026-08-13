@@ -13,8 +13,12 @@ frontend/dist/
 frontend/.tsbuild/
 *.tsbuildinfo
 v1_data/
+# Datasets are not committed: about 70 MB, and mostly obtainable from their original sources.
+# See the Data section of README.md for what to download and where to put it.
 data/raw/
 data/processed/
+# ...except the telecom supplement, which this project generates and nothing else provides.
+!data/telecom_supplement.csv
 models/artifacts/
 .env
 *.db
