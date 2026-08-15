@@ -1,5 +1,5 @@
 """Generates synthetic multimodal tickets by pairing a text complaint with a reused audio
-sample and a router image — the "same code, different driver" seam of UC-8: these tickets are
+sample and a router image, the "same code, different driver" seam of UC-8: these tickets are
 submitted through the exact same `create_ticket` entrypoint intake_api uses."""
 
 from __future__ import annotations

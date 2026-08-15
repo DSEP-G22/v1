@@ -22,5 +22,5 @@ def test_flags_pii_echo():
 
 
 def test_clean_draft_has_no_findings():
-    findings = check("Hi Alex, thanks for reaching out — we're looking into the router issue now.")
+    findings = check("Hi Alex, thanks for reaching out, we're looking into the router issue now.")
     assert findings == []

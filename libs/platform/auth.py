@@ -1,6 +1,6 @@
-"""Static bearer token per role (v1 auth stand-in — enough to exercise authorization checks
+"""Static bearer token per role (v1 auth stand-in, enough to exercise authorization checks
 without building an IdP). Each token maps to a role; the actor used for `agent_decision.actor_id`
-is the first seeded `app_user` with that role. Shared by workspace_api and admin_api — lives in
+is the first seeded `app_user` with that role. Shared by workspace_api and admin_api, lives in
 the platform layer (not a `services/*` package) so importing it isn't a cross-service import."""
 
 from __future__ import annotations

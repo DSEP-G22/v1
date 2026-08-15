@@ -1,4 +1,4 @@
-"""REQ-ASR-1..12 — transcribes an audio attachment. On terminal failure it still publishes a
+"""REQ-ASR-1..12, transcribes an audio attachment. On terminal failure it still publishes a
 `tickets.audio.done` event with status=failed: a silently dropped attachment means the
 aggregation window can never close early and will always run to the timeout (see plan §5
 pitfalls)."""

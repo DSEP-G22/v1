@@ -1,5 +1,5 @@
 """Durably captures `tickets.dlq` events (the in-process broker's DLQ topic has no persistence
-of its own) so admin_api can list and replay them. Wired once by runtime/wiring.py — not owned
+of its own) so admin_api can list and replay them. Wired once by runtime/wiring.py, not owned
 by any single `services/*` package, so it lives in the platform layer."""
 
 from __future__ import annotations

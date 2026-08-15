@@ -10,7 +10,7 @@ Source-of-truth documents:
 - `docs/SAD_G22.md` §5.2.1 (domain classes), §5.2.2 (service/table ownership), §5.2.3 (ports and
   adapters), §6.4 (topics), §6.5 (aggregation window), §8.2.1 (source tree), §9.2 (database), §9.5
   (graph schema)
-- `docs/SRS_G22.md` §4.1–4.12 (functional requirements REQ-*), Appendix B.5 (payload instance)
+- `docs/SRS_G22.md` §4.1-4.12 (functional requirements REQ-*), Appendix B.5 (payload instance)
 - `docs/Appendix_C-technology-stack.md` (allowed technologies)
 
 Deviations from the SAD that v1 deliberately makes (record these in `v1/docs/02-architecture-mapping.md`):
@@ -32,8 +32,8 @@ Everything above sits behind the ports of SAD §5.2.3, so none of it changes ser
 
 | File | Contents | What it can and cannot train |
 |---|---|---|
-| `Bitext_Sample_Customer_Support_Training_Dataset_27K_responses-v11.csv.zip` | one CSV, ~19 MB, 27k rows, columns `flags, instruction, category, intent, response`; 11 categories, 27 intents; `instruction`/`response` contain templated slots such as `{{Order Number}}`; `flags` encodes language-variation tags (B basic, Q colloquial, Z noise, and so on) | **Can** train: department classifier, intent classifier, reply-drafting style, sentiment/politeness cues. **Cannot** cover: telecom faults, network operations, field service — there is not one telecom row in it. A telecom supplement is mandatory (§9, notebook 01). |
-| `router detection.v38-data_video.coco.zip` | 2350 files, COCO format, `train/` 2137 images 4630 boxes, `valid/` 111 images 291 boxes, `test/` 94 images 218 boxes. 16 categories: `router-detection` (super-category), `fiber-cable, fiber-conn, fibers, lan-cable, lans, lans-conn, phone, phone-cable, phone-conn, power, power-cable, power-conn, usb, usb-cable, usb-conn`. Images resized to 516×516, 3 augmented versions per source image | **Can** train: a **port and cable detector** — which ports exist on the unit and which cables are connected. This is genuinely useful evidence ("customer says no internet; the WAN/fiber connector is not seated"). **Cannot** train an LED-state reader — there are no LED annotations at all. LED reading therefore stays a VLM prompt plus the heuristic HSV extractor, evaluated on a small hand-labelled subset drawn from these same images. |
+| `Bitext_Sample_Customer_Support_Training_Dataset_27K_responses-v11.csv.zip` | one CSV, ~19 MB, 27k rows, columns `flags, instruction, category, intent, response`; 11 categories, 27 intents; `instruction`/`response` contain templated slots such as `{{Order Number}}`; `flags` encodes language-variation tags (B basic, Q colloquial, Z noise, and so on) | **Can** train: department classifier, intent classifier, reply-drafting style, sentiment/politeness cues. **Cannot** cover: telecom faults, network operations, field service, there is not one telecom row in it. A telecom supplement is mandatory (§9, notebook 01). |
+| `router detection.v38-data_video.coco.zip` | 2350 files, COCO format, `train/` 2137 images 4630 boxes, `valid/` 111 images 291 boxes, `test/` 94 images 218 boxes. 16 categories: `router-detection` (super-category), `fiber-cable, fiber-conn, fibers, lan-cable, lans, lans-conn, phone, phone-cable, phone-conn, power, power-cable, power-conn, usb, usb-cable, usb-conn`. Images resized to 516×516, 3 augmented versions per source image | **Can** train: a **port and cable detector**, which ports exist on the unit and which cables are connected. This is genuinely useful evidence ("customer says no internet; the WAN/fiber connector is not seated"). **Cannot** train an LED-state reader, there are no LED annotations at all. LED reading therefore stays a VLM prompt plus the heuristic HSV extractor, evaluated on a small hand-labelled subset drawn from these same images. |
 
 This changes two things versus the earlier draft: the vision notebook trains a **detector over ports
 and cables** rather than an LED classifier, and `ExtractedFields` gains a `connectivity` block so
@@ -74,7 +74,7 @@ v1/
 │   ├── routing_rules.yaml
 │   ├── action_registry.yaml
 │   └── seed/
-│       ├── knowledge/*.md         # 6–10 SOP documents
+│       ├── knowledge/*.md         # 6-10 SOP documents
 │       └── graph_seed.yaml
 ├── libs/
 │   ├── domain/{contracts,policy,ports,state}
@@ -98,7 +98,7 @@ v1/
 └── docs/
 ```
 
-`pyproject.toml` — package discovery over `libs*`, `services*`, `runtime*`, `evaluation*`;
+`pyproject.toml`, package discovery over `libs*`, `services*`, `runtime*`, `evaluation*`;
 `requires-python = ">=3.11"`.
 
 Dependency groups (keep the base install small so CI needs no ML wheels):
@@ -120,7 +120,7 @@ Install: `pip install -e ".[dev]"` first; add `[ml]`/`[train]` only when reachin
   `__init__.py`, otherwise `pip install -e .` will not discover them and imports work from the
   source dir but break in tests run from elsewhere.
 - Do not name any module `types.py`, `queue.py`, `logging.py`, or `json.py` at top level of a
-  package that also does `import logging` — shadowing causes confusing `AttributeError` at import.
+  package that also does `import logging`, shadowing causes confusing `AttributeError` at import.
 
 ---
 
@@ -151,7 +151,7 @@ embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 classifier_path: Path = "./models/artifacts/department_clf.joblib"   # fallback if MLflow is down
 vector_store_path: Path = "./v1_data/vectors.json"
 
-# MLflow — the source of truth for every trained artefact
+# MLflow, the source of truth for every trained artefact
 mlflow_tracking_uri: str = "http://127.0.0.1:5000"
 mlflow_enabled: bool = True
 model_source: str = "mlflow"          # mlflow | local | stub
@@ -181,7 +181,7 @@ The `stub` profile forces every `*_impl` to a stub. This is the CI profile of SA
 
 ---
 
-## 3. Domain layer (`libs/domain`) — no I/O, no third-party imports except Pydantic
+## 3. Domain layer (`libs/domain`), no I/O, no third-party imports except Pydantic
 
 ### 3.1 `enums.py`
 `Modality(text|audio|image)`, `Channel(web_portal|email|phone|chat)`,
@@ -202,7 +202,7 @@ Frozen Pydantic models, `model_config = ConfigDict(frozen=True)`:
   `LedState(label, colour, behaviour)`,
   `PortObservation(port_type: usb|lan|phone|power|fiber, connected: bool, confidence, bbox)`,
   `ExtractedFields(device_model|None, led_states[], ports[], error_codes[], numeric_values{})`
-  — `ports[]` is filled by the trained detector of notebook 05 and is what makes the Roboflow
+, `ports[]` is filled by the trained detector of notebook 05 and is what makes the Roboflow
   dataset useful downstream; the graph gains `PortState -EVIDENCE_FOR-> Symptom` edges to match,
   `VisualSummary(attachment_id, prompt_template, summary_text, extracted_fields, confidence,
   low_confidence, model_version)`
@@ -213,7 +213,7 @@ Frozen Pydantic models, `model_config = ConfigDict(frozen=True)`:
   `metadata{}`, plus `revision: int`. Add `validate_payload()` raising `PayloadInvalid` when
   `fused_text` is empty, spans overlap, or a span exceeds `len(fused_text)`.
 - `analysis.py`: `TriageResult`, `Citation`, `Diagnosis`, `PolicyFinding`, `DraftResponse`,
-  `ActionRecommendation` — fields exactly as SAD Figure 4.
+  `ActionRecommendation`, fields exactly as SAD Figure 4.
 - `events.py`: `EventEnvelope(schema_version, event_id, ticket_id, occurred_at, stage, body: dict)`
   and a `Topics` constant class holding the eleven topics of SAD Figure 9:
   `tickets.raw`, `tickets.audio.work`, `tickets.image.work`, `tickets.text.work`,
@@ -226,19 +226,19 @@ Frozen Pydantic models, `model_config = ConfigDict(frozen=True)`:
 `FAILED`. Pure function; no persistence.
 
 ### 3.4 `policy/`
-All pure functions over domain types — this is where the 85 % coverage gate applies.
+All pure functions over domain types, this is where the 85 % coverage gate applies.
 
 - `priority.py::score(triage_inputs) -> (score:int 0..100, band, signals[])`.
   Weighted sum, weights loaded as a plain dict argument (never read config inside the domain):
   sentiment 25, urgency keywords 20, customer segment 15, outage scope 20, prior contacts 10,
-  SLA age 10. Clamp to 0–100. Band thresholds: ≥80 critical, ≥60 high, ≥35 normal, else low.
-- `routing.py::evaluate(rules, triage_result) -> Department` — first matching rule wins, else the
+  SLA age 10. Clamp to 0-100. Band thresholds: ≥80 critical, ≥60 high, ≥35 normal, else low.
+- `routing.py::evaluate(rules, triage_result) -> Department`, first matching rule wins, else the
   classifier's department.
-- `action_selection.py::select(fault, registry_entries, params) -> ActionRecommendation|None` —
+- `action_selection.py::select(fault, registry_entries, params) -> ActionRecommendation|None`,
   must return `None` if no `ActionRegistryEntry.permits(params)`.
-- `compliance.py::check(draft_text, policy_rules) -> list[PolicyFinding]` — regex-based checks for
+- `compliance.py::check(draft_text, policy_rules) -> list[PolicyFinding]`, regex-based checks for
   promises of refunds/credits, absolute guarantees, missing greeting, PII echo.
-- `fusion.py::fuse(original_text, transcripts, visual_summaries) -> (fused_text, provenance[])` —
+- `fusion.py::fuse(original_text, transcripts, visual_summaries) -> (fused_text, provenance[])`,
   the only place fused text is built. Format each fragment as
   `[CUSTOMER_TEXT] …`, `[AUDIO:{attachment_id}] …`, `[IMAGE:{attachment_id}] …`, joined by `\n\n`,
   and compute spans with a running offset so provenance spans are exact character offsets.
@@ -272,7 +272,7 @@ All pure functions over domain types — this is where the 85 % coverage gate ap
 ## 4. Platform layer (`libs/platform`)
 
 ### 4.1 Broker (`broker/`)
-- `inprocess.py`: `InProcessBroker` — dict of topic → list of `(group, handler)`, a
+- `inprocess.py`: `InProcessBroker`, dict of topic → list of `(group, handler)`, a
   `queue.Queue` per group, worker threads, `produce()` appends, at-least-once semantics simulated by
   re-delivering on handler exception up to `max_retries`, then producing to `tickets.dlq` with the
   error context. Must preserve per-`ticket_id` ordering: hash the key to one of N worker lanes.
@@ -297,7 +297,7 @@ All pure functions over domain types — this is where the 85 % coverage gate ap
 - `session.py`: engine + `session_scope()` context manager. For SQLite set
   `PRAGMA journal_mode=WAL` and `check_same_thread=False`.
 - `repositories.py`: one repository class per aggregate; **enforce the single-writer rule of SAD
-  §5.2.2 by convention and a test** — `tests/architecture/test_single_writer.py` greps each service
+  §5.2.2 by convention and a test**, `tests/architecture/test_single_writer.py` greps each service
   package for repository write calls it does not own.
 - `outbox.py`: `enqueue(session, topic, key, payload)` writing in the same transaction as the state
   change, plus `drain(broker)` publishing rows where `published_at IS NULL` and stamping them.
@@ -312,9 +312,9 @@ Local: content-addressed path `{root}/{org}/{yyyy}/{mm}/{sha256}{ext}`; `signed_
   keyword+prosody proxy) and `StubTranscriber` returning a fixed transcript from a sidecar
   `.txt` file next to the audio if present.
 - `vlm.py`:
-  - `OllamaVisionExtractor` — POST `/api/generate` with `images: [base64]`, `format: "json"`, the
+  - `OllamaVisionExtractor`, POST `/api/generate` with `images: [base64]`, `format: "json"`, the
     prompt template from `models/prompts/vlm/{template}.txt`, then parse to `ExtractedFields`.
-  - `HeuristicLedExtractor` — port of the prototype's `image_ingest._run_vlm`: HSV masking for
+  - `HeuristicLedExtractor`, port of the prototype's `image_ingest._run_vlm`: HSV masking for
     red/green/amber blobs, row clustering to guess LED labels. Kept as the R1 fallback.
   - `StubExtractor`.
   - Template selection helper `choose_template(filename, hint) -> router_led_panel | speed_test |
@@ -322,7 +322,7 @@ Local: content-addressed path `{root}/{org}/{yyyy}/{mm}/{sha256}{ext}`; `signed_
 - `llm.py`: `OllamaGenerator` implementing `TextGeneratorPort` via
   `POST {base}/api/chat` with `{"model":…, "messages":[…], "stream": false, "format": "json"|None,
   "options": {"temperature":0.2, "num_ctx": …}}`. Add:
-  - a bounded semaphore (`max_in_flight`, default 2) — ADR-012 bounded WIP;
+  - a bounded semaphore (`max_in_flight`, default 2), ADR-012 bounded WIP;
   - retry with exponential backoff + jitter, 3 attempts;
   - a circuit breaker (open after 5 consecutive failures, half-open after 30 s);
   - `generate_json(prompt, schema)` that validates against a Pydantic model and, on failure, does
@@ -330,7 +330,7 @@ Local: content-addressed path `{root}/{org}/{yyyy}/{mm}/{sha256}{ext}`; `signed_
     `GenerationInvalid`.
   - `StubGenerator` returning deterministic canned JSON keyed by prompt kind (used by CI).
 - `embedder.py`: `SentenceTransformerEmbedder` and `HashEmbedder` (deterministic 384-dim hashing
-  vectorizer, no model download — used in CI).
+  vectorizer, no model download, used in CI).
 - `classifier.py`: `SklearnClassifier` (model resolved through `MLflowModelResolver`, exposes
   `predict_proba` → top-1 + 2 alternatives), `LlmClassifier` (few-shot via `TextGeneratorPort`),
   `RuleOnlyClassifier` (keyword table fallback). Selection order at runtime: MLflow champion →
@@ -340,7 +340,7 @@ Local: content-addressed path `{root}/{org}/{yyyy}/{mm}/{sha256}{ext}`; `signed_
   from MLflow; `StubDetector` returns `[]`. The image service calls the detector **first** and passes
   its findings into the VLM prompt as structured hints, which measurably reduces VLM hallucination.
 
-### 4.8 MLflow integration (`libs/platform/mlflow_registry.py`) — new in v1
+### 4.8 MLflow integration (`libs/platform/mlflow_registry.py`), new in v1
 
 MLflow is used for three distinct jobs; keep them separate in your head or the design gets muddled.
 
@@ -351,7 +351,7 @@ MLflow is used for three distinct jobs; keep them separate in your head or the d
    alias `@champion` only after it beats the current champion on the notebook's acceptance metric.
    Registered names: `cst-department-classifier`, `cst-sentiment-classifier`, `cst-port-detector`,
    `cst-embedder`, `cst-intent-llm` (the LLM entry stores the LoRA adapter and the GGUF path as
-   artifacts plus the Ollama tag as a tag — Ollama itself is not served by MLflow).
+   artifacts plus the Ollama tag as a tag, Ollama itself is not served by MLflow).
 3. **Runtime resolution** (`MLflowModelResolver`): `resolve(role) -> (obj, model_version_string)`.
    - caches downloaded artefacts under `v1_data/mlflow_cache/`;
    - stamps `model_version` on every artefact the pipeline writes, using the MLflow
@@ -380,8 +380,8 @@ settings. Every service receives this object; **no service constructs an adapter
 Also loads `config/registry.yaml` so each artefact can be stamped with `model_version`.
 
 ### 4.7 Observability (`libs/observability/`)
-`logging.py` — JSON structured logs with `ticket_id`, `stage`, `duration_ms`, `model_version`.
-`metrics.py` — in-process counters/histograms with an optional Prometheus exporter; decorator
+`logging.py`, JSON structured logs with `ticket_id`, `stage`, `duration_ms`, `model_version`.
+`metrics.py`, in-process counters/histograms with an optional Prometheus exporter; decorator
 `@timed(stage)`.
 
 **Acceptance:** `pytest tests/unit/test_adapters_stub.py` green in the `stub` profile with no
@@ -390,9 +390,9 @@ network access.
 **Pitfalls and debugging**
 - Ollama `format: "json"` still returns prose sometimes on small quantised models. Always run the
   output through a `_extract_json()` helper that finds the outermost `{...}` before parsing.
-- Ollama first call after `ollama serve` loads the model and may take 30–90 s. Set
+- Ollama first call after `ollama serve` loads the model and may take 30-90 s. Set
   `llm_timeout_s=120` for the first run or pre-warm with a one-token request at startup.
-- `httpx` default timeout is 5 s — always pass an explicit `timeout=`; a silent 5 s timeout looks
+- `httpx` default timeout is 5 s, always pass an explicit `timeout=`; a silent 5 s timeout looks
   identical to "the LLM is down" and will trip the circuit breaker.
 - SQLite + threads: `sqlite3.ProgrammingError: SQLite objects created in a thread…` means the engine
   was created without `connect_args={"check_same_thread": False}`, or a `Session` is being shared
@@ -406,60 +406,60 @@ network access.
 Each service is a package with `handler.py` (pure-ish function taking `(ports, session, envelope)`),
 `__main__.py` (stand-alone runner subscribing to its topic), and `README.md` (one paragraph: the
 requirement it implements, the topic it consumes, the table it owns). **No service imports another
-service** — enforced by `tests/architecture/test_imports.py`.
+service**, enforced by `tests/architecture/test_imports.py`.
 
 Build in this order; each step is independently testable.
 
-1. **intake_api** (REQ-ING-1..15) — FastAPI. `POST /api/v1/tickets` (multipart: `text`,
+1. **intake_api** (REQ-ING-1..15), FastAPI. `POST /api/v1/tickets` (multipart: `text`,
    `files[]`, `customer_id`, `channel`, `Idempotency-Key` header). Validates size/type by
    **sniffing magic bytes, not the declared MIME**, stores media, writes `ticket` + `attachment` +
    `outbox(tickets.raw)` in one transaction, returns `202 {ticket_id}`. Also `GET /api/v1/tickets/{id}/status`.
-2. **routing_svc** (REQ-ING-8, REQ-FUS-4) — consumes `tickets.raw`, writes `aggregation_state` with
+2. **routing_svc** (REQ-ING-8, REQ-FUS-4), consumes `tickets.raw`, writes `aggregation_state` with
    the expected completion set `{attachment_ids by modality} ∪ {"text"}`, fans out to the three
    `.work` topics.
-3. **text_svc** — normalise (unicode NFKC, whitespace, quoted-reply stripping), language detect,
+3. **text_svc**, normalise (unicode NFKC, whitespace, quoted-reply stripping), language detect,
    PII scan (regex: email, phone, NIC, card) → flags, publish `tickets.text.done`.
-4. **audio_svc** (REQ-ASR-1..12) — `TranscriberPort`, retries, `low_confidence` flag, writes
+4. **audio_svc** (REQ-ASR-1..12), `TranscriberPort`, retries, `low_confidence` flag, writes
    `audio_transcript`, publishes `tickets.audio.done`. On terminal failure publish a `done` event
-   with `status="failed"` — never silently drop, or the aggregation window will always expire.
-5. **image_svc** (REQ-VLM-1..12) — template choice, `VisualExtractorPort`, JSON-schema repair,
+   with `status="failed"`, never silently drop, or the aggregation window will always expire.
+5. **image_svc** (REQ-VLM-1..12), template choice, `VisualExtractorPort`, JSON-schema repair,
    writes `visual_summary`, publishes `tickets.image.done`.
-6. **aggregator_svc** (REQ-FUS-1..10) — the statechart of SAD §6.5. Records each result
+6. **aggregator_svc** (REQ-FUS-1..10), the statechart of SAD §6.5. Records each result
    idempotently against `aggregation_state`, emits when the set is complete, or emits a `partial`
    payload when the window (120 s) expires. Uses `policy.fusion.fuse`, validates, writes
    `unified_payload` revision *n+1*, publishes `tickets.aggregated`.
-   The timer in v1 is a single background sweeper thread scanning for expired rows every 5 s — do
+   The timer in v1 is a single background sweeper thread scanning for expired rows every 5 s, do
    not use one `threading.Timer` per ticket.
-7. **triage_svc** (REQ-CLS-*, REQ-PRI-*) — `ClassifierPort` + `policy.priority` + `policy.routing`;
+7. **triage_svc** (REQ-CLS-*, REQ-PRI-*), `ClassifierPort` + `policy.priority` + `policy.routing`;
    writes `triage_result`; publishes `tickets.triaged`.
-8. **retrieval_svc** — library, not a consumer. Dense top-k (k=8) over `sop_chunks` +
+8. **retrieval_svc**, library, not a consumer. Dense top-k (k=8) over `sop_chunks` +
    `historical_resolutions`, then graph expansion from extracted entities (LED states, **port and
    cable observations from the detector**, error codes, device model), then a bounded context
    assembler (max ~2500 tokens, dedupe by chunk id).
-9. **orchestrator_svc** (REQ-FLT-1..14) — retrieval → `TextGeneratorPort.generate_json` with
+9. **orchestrator_svc** (REQ-FLT-1..14), retrieval → `TextGeneratorPort.generate_json` with
    `models/prompts/llm/diagnosis.txt` → `Diagnosis`; `verify_citations()` drops chunk ids absent
    from the retrieved context and sets `UNVERIFIED_CITATION`; below
    `diagnosis_min_confidence` mark `needs_human_diagnosis`. Timeouts and circuit breaker come from
    the adapter. Writes `diagnosis` + `citation`; publishes `tickets.diagnosed`.
-10. **response_svc** (REQ-RES-1..12) — **agentic**, see §5.10 below. Consumes `tickets.diagnosed`,
+10. **response_svc** (REQ-RES-1..12), **agentic**, see §5.10 below. Consumes `tickets.diagnosed`,
     writes `draft_response` + `action_recommendation` + `agent_trace`, publishes `tickets.ready`,
     transitions the ticket to `READY_FOR_AGENT`. Contract in and out is identical to the
     single-call version, so nothing downstream knows it is an agent.
-11. **projector_svc** — maintains `queue_projection` from `tickets.ready` and from workspace
+11. **projector_svc**, maintains `queue_projection` from `tickets.ready` and from workspace
     commands; the queue read path never joins the analysis tables.
-12. **workspace_api** (REQ-WKS-1..18) — `GET /queue`, `GET /tickets/{id}`, `POST /tickets/{id}/lock`,
+12. **workspace_api** (REQ-WKS-1..18), `GET /queue`, `GET /tickets/{id}`, `POST /tickets/{id}/lock`,
     `PATCH /tickets/{id}/draft`, `POST /tickets/{id}/approve` (writes `agent_decision` then calls the
     delivery gateway), `POST /tickets/{id}/reject`, `POST /tickets/{id}/actions/{rec_id}/execute`,
-    `WS /ws/queue`. Auth in v1: a static bearer token per role in `.env` — enough to exercise the
+    `WS /ws/queue`. Auth in v1: a static bearer token per role in `.env`, enough to exercise the
     authorization checks without building an IdP.
-13. **delivery_gateway** (REQ-BR-1, REQ-SAFE-1) — the only egress. Refuses to send without a
+13. **delivery_gateway** (REQ-BR-1, REQ-SAFE-1), the only egress. Refuses to send without a
     persisted `agent_decision.id`; writes `delivery`.
-14. **action_svc** — re-validates against the registry, idempotent execution keyed by
+14. **action_svc**, re-validates against the registry, idempotent execution keyed by
     `(ticket_id, action_id, sha256(params))`, simulated adapters in v1.
-15. **knowledge_ingest** (REQ-ONB-1..10) — parse Markdown/PDF/TXT → heading-aware chunks
+15. **knowledge_ingest** (REQ-ONB-1..10), parse Markdown/PDF/TXT → heading-aware chunks
     (≈800 chars, 100 overlap) → embed → vector upsert → entity extraction → graph upsert; writes
     `knowledge_document`/`knowledge_chunk` and a data-quality report.
-16. **admin_api** — users, routing rules, thresholds, action registry CRUD, health, DLQ listing and
+16. **admin_api**, users, routing rules, thresholds, action registry CRUD, health, DLQ listing and
     replay. Every mutation writes a `config_version` row.
 
 ### 5.10 Agentic response generation (`services/response_svc/agent/`)
@@ -472,9 +472,9 @@ write a truthful reply.
 
 **Non-negotiable boundaries** (these are what keep the SAD's safety properties intact):
 
-- the agent has **no tool that contacts a customer** — drafting is the terminal step, and
+- the agent has **no tool that contacts a customer**, drafting is the terminal step, and
   `delivery_gateway` still requires a persisted `agent_decision` (ADR-008);
-- the agent has **no tool that executes an action** — it may only *propose* an
+- the agent has **no tool that executes an action**, it may only *propose* an
   `ActionRecommendation`, which `action_svc` re-validates after human approval;
 - every tool is read-only except `propose_action` and `emit_draft`, which write only to the
   service's own tables;
@@ -494,7 +494,7 @@ services/response_svc/
 └── fallback.py           # the deterministic single-call draft path
 ```
 
-**Tool set** (each is a thin wrapper over an existing port — the agent introduces no new I/O paths):
+**Tool set** (each is a thin wrapper over an existing port, the agent introduces no new I/O paths):
 
 | Tool | Signature | Backed by | Notes |
 |---|---|---|---|
@@ -513,7 +513,7 @@ services/response_svc/
    compensation, credits, or a fixed restoration time; never invent an action), the tool schemas,
    and the ticket's diagnosis.
 2. Call `TextGeneratorPort` with Ollama tool-calling (`POST /api/chat` with `tools=[…]`). Parse
-   `message.tool_calls`. **If the model returns no `tool_calls` field** (common on quantised 7–8 B
+   `message.tool_calls`. **If the model returns no `tool_calls` field** (common on quantised 7-8 B
    builds), fall back to a ReAct text protocol: require
    `{"thought":…, "tool":…, "args":{…}}` with `format: "json"` and parse that instead. Implement both;
    select by a `tool_protocol` setting auto-detected once at startup.
@@ -527,13 +527,13 @@ services/response_svc/
 6. On exception, timeout, or budget exhaustion → `fallback.py` single-call draft, flag
    `AGENT_FALLBACK`. A ticket must always reach `READY_FOR_AGENT`.
 
-**Persistence — `agent_trace` table** (new, owned by `response_svc`):
+**Persistence, `agent_trace` table** (new, owned by `response_svc`):
 `id, ticket_id, step_no, role(plan|tool|observation|final), tool_name, tool_args JSONB,
 observation JSONB, latency_ms, token_estimate, created_at`. Append-only. Two reasons this is
 mandatory: the workspace shows the agent's reasoning to the agent-user (REQ-WKS transparency), and
 without it an agent failure is undebuggable.
 
-**Evaluation** (notebook 08): agentic vs single-call on the same 100 tickets — citation
+**Evaluation** (notebook 08): agentic vs single-call on the same 100 tickets, citation
 verification rate, compliance findings per draft, action-recommendation precision, mean steps, p95
 latency, fallback rate. Report both; if the agent does not beat the single call on grounding, ship
 the single call and say so.
@@ -544,7 +544,7 @@ the single call and say so.
 - Context blow-up: six steps × full chunk text exceeds `num_ctx` and Ollama silently truncates the
   **front** of the conversation, dropping the system rules. Truncate observations, keep the system
   message pinned, and log the estimated token count each step.
-- Tool-call JSON with trailing commas or Python `True` — run every tool-arg parse through the same
+- Tool-call JSON with trailing commas or Python `True`, run every tool-arg parse through the same
   `_extract_json()` + repair path as §4.4.
 - The agent proposing an action for a fault it never actually confirmed. Require `propose_action` to
   be preceded by a `list_permitted_actions` call in the same run; reject otherwise.
@@ -562,11 +562,11 @@ the single call and say so.
 
 ## 6. Runtime wiring (`runtime/`)
 
-- `runtime/wiring.py::build_app(settings)` — builds ports, DB, broker, subscribes every handler to
+- `runtime/wiring.py::build_app(settings)`, builds ports, DB, broker, subscribes every handler to
   its topic and group, starts the outbox drainer and the aggregation sweeper.
-- `runtime/local.py` — single-process mode: intake API + all consumers + workspace API on one
+- `runtime/local.py`, single-process mode: intake API + all consumers + workspace API on one
   Uvicorn process. This is the demo entry point: `python -m runtime.local`.
-- `runtime/demo_ticket.py` — posts the prototype's sample assets
+- `runtime/demo_ticket.py`, posts the prototype's sample assets
   (`ingestion-pipeline-prototype/data/sample_audio/sample_call.wav`,
   `sample_images/router_red_led.png`) plus a text complaint, then polls until `READY_FOR_AGENT` and
   prints the payload, triage, diagnosis, and draft.
@@ -591,28 +591,28 @@ queue endpoint returns an empty list rather than a 500.
 
 Mirror the CI gates of SAD §8.2.3:
 
-- `tests/unit/` — policies (priority, routing, action selection, compliance, fusion), the state
+- `tests/unit/`, policies (priority, routing, action selection, compliance, fusion), the state
   machine, `verify_citations`. Target ≥85 % on `libs/domain/policy`.
-- `tests/contract/` — every payload contract round-trips against the golden example copied from SRS
+- `tests/contract/`, every payload contract round-trips against the golden example copied from SRS
   Appendix B.5 into `tests/golden/unified_payload.json`, in both directions.
-- `tests/integration/test_pipeline_stub.py` — full pipeline under the `stub` profile with the
+- `tests/integration/test_pipeline_stub.py`, full pipeline under the `stub` profile with the
   in-process broker: ticket in → `READY_FOR_AGENT` out.
-- `tests/architecture/test_imports.py` — no `services.X` imports `services.Y`; only
+- `tests/architecture/test_imports.py`, no `services.X` imports `services.Y`; only
   `delivery_gateway` imports `MailGatewayPort`; only `action_svc` imports `ActionAdapterPort`.
-- `tests/degradation/` — parametrised: for each of ASR, VLM, LLM, embedder, replace the adapter with
+- `tests/degradation/`, parametrised: for each of ASR, VLM, LLM, embedder, replace the adapter with
   one that always raises and assert the ticket still reaches `READY_FOR_AGENT` with the expected
-  flag set. This is the single most valuable test suite in the project — it is what proves G7.
+  flag set. This is the single most valuable test suite in the project, it is what proves G7.
 
 ---
 
-## 9. Training notebooks (`notebooks/`) — real data, real checkpoints, MLflow-tracked
+## 9. Training notebooks (`notebooks/`), real data, real checkpoints, MLflow-tracked
 
 Nine notebooks. Every one of them obeys the same contract, so the reviewer can check them
 mechanically:
 
 1. **Cell 1 is boilerplate**: `os.chdir` to the `v1` root, `sys.path.insert(0, ".")`, read
    `MLFLOW_TRACKING_URI` from the environment (default `http://127.0.0.1:5000`), set the experiment
-   name, print the resolved dataset paths. No absolute `d:\…` path anywhere — the data root is
+   name, print the resolved dataset paths. No absolute `d:\…` path anywhere, the data root is
    `Path.cwd().parent / "data"`.
 2. **First markdown cell** declares: inputs, outputs, the artefact it registers, the acceptance
    metric, and the expected runtime with and without a GPU.
@@ -641,27 +641,27 @@ Build the notebooks from `notebooks/_build_notebooks.py` (cells held as Python s
   intent, response`): load with `pandas`, assert 27k rows / 11 categories / 27 intents, and profile
   category × intent counts, text length, and the `flags` distribution.
 - **Slot handling**: `instruction` and `response` contain `{{Order Number}}`-style slots. Produce two
-  text columns — `instruction_clean` (slots removed) and `instruction_filled` (slots replaced with
+  text columns, `instruction_clean` (slots removed) and `instruction_filled` (slots replaced with
   realistic random values from a small generator). Train on `instruction_filled`, evaluate on both;
   training on the raw braces teaches the classifier to key on `{{`.
 - **Department mapping** (`config/department_map.yaml`, explicit and reviewable, not inferred):
   `REFUND, INVOICE, PAYMENT → billing`; `CANCEL → retention`;
   `ACCOUNT, SUBSCRIPTION → technical_support`; `ORDER, SHIPPING, DELIVERY → general`;
   `CONTACT, FEEDBACK → general`.
-- **Telecom supplement — mandatory.** Bitext contains no telecom content, so
+- **Telecom supplement, mandatory.** Bitext contains no telecom content, so
   `network_operations` and `field_service` would be unlearnable and the classifier would be useless
-  for the actual product. Build `data/processed/telecom_supplement.csv` with 600–900 rows across
+  for the actual product. Build `data/processed/telecom_supplement.csv` with 600-900 rows across
   `technical_support, network_operations, field_service, billing, retention`, each row
   `{text, department, intent, fault, priority_hint, sentiment}`. Two generation routes, use both and
   label the source column: (a) template expansion over a fault × symptom × device grid written by
-  hand — deterministic and licence-clean; (b) LLM paraphrase through the local Ollama model to add
+  hand, deterministic and licence-clean; (b) LLM paraphrase through the local Ollama model to add
   surface variety, then a manual review pass over a 10 % sample. Record the review outcome in the
   notebook. Keep the supplement in version control; it is a project asset.
 - **Splits**: stratified 80/10/10 on `(department, intent)`, seed 42, saved as Parquet. Store the
   split assignment as a column so every later notebook uses the identical split.
 - **Router dataset**: parse the three `_annotations.coco.json` files, produce a summary table of the
   16 classes and their counts (verified: train 2137 images / 4630 boxes, valid 111 / 291, test
-  94 / 218), and **check for augmentation leakage** — Roboflow generated 3 augmented versions per
+  94 / 218), and **check for augmentation leakage**, Roboflow generated 3 augmented versions per
   source image; group by the pre-`.rf.` filename stem and assert no stem appears in two splits. If
   it does, re-split by stem and save the corrected split to `data/processed/router_splits.json`.
 - Log to MLflow: row counts, class distributions, both fingerprints, the leakage check result, and
@@ -676,12 +676,12 @@ rows; leakage check passes.
 **Experiment** `cst/department-classifier` · **Registers** `cst-department-classifier` ·
 **Acceptance** macro-F1 ≥ 0.85 on the held-out split, and ≥0.70 F1 on each telecom class
 
-- Features: TF-IDF word 1–2 grams + char\_wb 3–5 grams, `min_df=2`, union via `FeatureUnion`.
+- Features: TF-IDF word 1-2 grams + char\_wb 3-5 grams, `min_df=2`, union via `FeatureUnion`.
 - Models: `LinearSVC` + `CalibratedClassifierCV` (sigmoid), `LogisticRegression(class_weight=
-  "balanced")`, and — as the transformer arm — `distilbert-base-uncased` fine-tuned for 3 epochs
+  "balanced")`, and, as the transformer arm, `distilbert-base-uncased` fine-tuned for 3 epochs
   (`transformers.Trainer`, lr 2e-5, bs 16, max_len 128). Log each as a separate MLflow run under the
   same experiment, with a `model_family` tag.
-- Report macro-F1, per-class F1, confusion matrix (logged as a PNG), and a **calibration curve** —
+- Report macro-F1, per-class F1, confusion matrix (logged as a PNG), and a **calibration curve**,
   `ClassifierPort` returns confidences that the triage threshold and the workspace UI both consume,
   so a badly calibrated winner is worse than a slightly less accurate calibrated one.
 - Save: `mlflow.sklearn.log_model(..., signature=…, input_example=…)` (or
@@ -689,7 +689,7 @@ rows; leakage check passes.
   `department_clf.json` sidecar (`model_version, trained_at, classes, macro_f1, threshold`).
 - Promote the best macro-F1 run to `@champion`.
 
-**Pitfalls**: class imbalance after the Bitext→department collapse (`general` dominates) — use
+**Pitfalls**: class imbalance after the Bitext→department collapse (`general` dominates), use
 `class_weight="balanced"` and report macro, never accuracy. `CalibratedClassifierCV` in
 scikit-learn ≥1.6 renamed `base_estimator` to `estimator`; pin or handle both.
 
@@ -726,22 +726,22 @@ split or preprocessing bug rather than the model)
 
 ---
 
-### 05_diagnosis_llm_ollama.ipynb — the LLM fine-tune
+### 05_diagnosis_llm_ollama.ipynb, the LLM fine-tune
 **Experiment** `cst/intent-llm` · **Registers** `cst-intent-llm` (artifacts: LoRA adapter, merged
 GGUF path, `Modelfile`; tag `ollama_tag=cst-diagnosis:v1`) · **Acceptance** the fine-tune must beat
 the prompt baseline on JSON validity **and** department accuracy, else the baseline ships
 
 Run both tracks and log both to MLflow:
 
-- **Track A — prompt baseline (no training).** Few-shot prompt over
+- **Track A, prompt baseline (no training).** Few-shot prompt over
   `llama3.1:8b-instruct-q4_K_M` through Ollama with `format: "json"`, measured on the held-out set
   from notebook 01. This is what the pipeline uses on day one and the fallback if training fails.
   Log: exact-match intent accuracy, department accuracy, JSON-validity rate, p50/p95 latency.
-- **Track B — QLoRA.** Dataset in chat format:
+- **Track B, QLoRA.** Dataset in chat format:
   `{"messages":[{"role":"system", …}, {"role":"user", "content": fused_text},
   {"role":"assistant", "content": json.dumps({"intent":…, "fault":…, "department":…,
   "rationale":…})}]}`, built from the processed Bitext + telecom supplement (the supplement is what
-  teaches fault vocabulary — Bitext alone cannot). Train with `peft`: 4-bit NF4, r=16, α=32,
+  teaches fault vocabulary, Bitext alone cannot). Train with `peft`: 4-bit NF4, r=16, α=32,
   dropout 0.05, target modules `q,k,v,o,gate,up,down`, lr 2e-4 cosine, 2 epochs, bs 1 × grad-accum
   16, `max_seq_len` 1024, `gradient_checkpointing=True`. Log loss curves and every hyperparameter.
 - **Export to Ollama**: `merge_and_unload()` → `llama.cpp/convert_hf_to_gguf.py` → quantise
@@ -750,27 +750,27 @@ Run both tracks and log both to MLflow:
   Log the `Modelfile` and the quantised checksum as MLflow artifacts; the GGUF itself is large, so
   log its path and sha256 rather than the bytes unless the artifact store is on a fast disk.
 - **Head-to-head cell**: base vs fine-tuned on identical prompts, same seed, table written to
-  `evaluation/reports/llm_comparison.md` and logged to MLflow. Include a tool-calling check — the
+  `evaluation/reports/llm_comparison.md` and logged to MLflow. Include a tool-calling check, the
   agent of §5.10 needs the model to emit usable `tool_calls`, and a LoRA on JSON-only outputs can
   *degrade* tool-calling. Test that explicitly before promoting.
 - Switching the system to the fine-tune is a one-line change: `llm_model=cst-diagnosis:v1` in `.env`.
 
-**Pitfalls**: 8B QLoRA needs ~10–12 GB VRAM — below that switch the base to
+**Pitfalls**: 8B QLoRA needs ~10-12 GB VRAM, below that switch the base to
 `Llama-3.2-3B-Instruct` or `Qwen2.5-3B-Instruct` and record the substitution in the docs; Llama 3.1
 weights are gated (accept the licence, `huggingface-cli login`); convert the **merged** model, never
-the adapter; `bitsandbytes` on Windows is fragile — if it will not install, run this notebook in
+the adapter; `bitsandbytes` on Windows is fragile, if it will not install, run this notebook in
 WSL2 or Colab and copy the GGUF back; a fine-tune that overfits produces perfect JSON and useless
 rationales, so read ten generated samples by hand before promoting.
 
 ---
 
-### 06_port_cable_detector.ipynb — the router dataset's real use
+### 06_port_cable_detector.ipynb, the router dataset's real use
 **Experiment** `cst/port-detector` · **Registers** `cst-port-detector` · **Acceptance**
 mAP@50 ≥ 0.60 overall and ≥0.50 on `lans`, `power`, `fiber-conn`
 
-- The Roboflow export is COCO with 16 classes covering ports, cables, and connectors — **not** LEDs.
+- The Roboflow export is COCO with 16 classes covering ports, cables, and connectors, **not** LEDs.
   Train an object detector: `ultralytics` YOLOv8n/s (convert COCO → YOLO txt in the notebook) or
-  `torchvision` Faster R-CNN if `ultralytics` is unwanted. 50–80 epochs, 516×516, default
+  `torchvision` Faster R-CNN if `ultralytics` is unwanted. 50-80 epochs, 516×516, default
   augmentation off (Roboflow already augmented).
 - Use the leakage-corrected splits from notebook 01, not the raw folder split.
 - Collapse the 16 classes into the five `PortObservation.port_type` values plus a `connected`
@@ -783,10 +783,10 @@ mAP@50 ≥ 0.60 overall and ≥0.50 on `lans`, `power`, `fiber-conn`
 - Wire-up note: `services/image_svc` runs the detector before the VLM and injects
   `"Detected ports: lan(connected), power(connected), fiber(not connected)"` into the VLM prompt.
 
-**Pitfalls**: class imbalance is severe (`usb` 887 boxes vs `fibers` 15) — report per-class AP and
+**Pitfalls**: class imbalance is severe (`usb` 887 boxes vs `fibers` 15), report per-class AP and
 do not let a high overall mAP hide a dead class; the tiny classes may be better dropped than
 trained. COCO category id 0 is the Roboflow super-category `router-detection`, which is not a real
-class — exclude it or every metric is inflated.
+class, exclude it or every metric is inflated.
 
 ---
 
@@ -794,7 +794,7 @@ class — exclude it or every metric is inflated.
 **Experiment** `cst/led-vlm` · **Outputs** tuned `models/prompts/vlm/*.txt`, thresholds ·
 **No registered model** (the VLM is served by Ollama; only prompts and thresholds are artefacts)
 
-- Hand-label 40–60 router images from `data/raw/router_detection/` with their visible LED states into
+- Hand-label 40-60 router images from `data/raw/router_detection/` with their visible LED states into
   `data/processed/led_labels.jsonl` (`{image, device_hint, leds:[{label,colour,behaviour}]}`). This
   is the only manual labelling the project requires and it takes about two hours.
 - Compare three extractors on field-level accuracy and JSON validity: heuristic HSV,
@@ -805,7 +805,7 @@ class — exclude it or every metric is inflated.
 
 **Pitfalls**: Ollama vision wants raw base64 with no `data:` prefix; re-save PNGs as RGB (alpha
 channel triggers 400s); many images in this dataset show cables and connectors rather than a
-readable LED panel — filter to panel-visible images before labelling or the evaluation set is noise.
+readable LED panel, filter to panel-visible images before labelling or the evaluation set is noise.
 
 ---
 
@@ -820,7 +820,7 @@ model, wrapped) · **Acceptance** WER ≤0.25 on the sample calls; recall@5 ≥0
 - **Retrieval**: chunking comparison (fixed 500/800/1200 vs heading-aware) over the seed SOP corpus;
   embedding comparison (`all-MiniLM-L6-v2` vs `BAAI/bge-small-en-v1.5`); evaluation on 40
   hand-written question→chunk pairs (recall@5, MRR); then **dense-only vs dense+graph expansion** on
-  fault-prediction accuracy — this is the experiment that justifies ADR-007, so report it whichever
+  fault-prediction accuracy, this is the experiment that justifies ADR-007, so report it whichever
   way it comes out.
 - Log the chosen chunking parameters to `config/settings.yaml` and register the embedder so the
   vector store's `embedding_model` guard has a version to compare against.
@@ -835,7 +835,7 @@ model, wrapped) · **Acceptance** WER ≤0.25 on the sample calls; recall@5 ≥0
   telecom-supplement text + a reused audio sample + a router image, with known ground-truth
   department, fault, and expected action.
 - Run the harness three ways and log all three as MLflow runs under one parent run:
-  (a) `stub` profile — proves the plumbing; (b) full profile, **single-call** response generation;
+  (a) `stub` profile, proves the plumbing; (b) full profile, **single-call** response generation;
   (c) full profile, **agentic** response generation.
 - Metrics: department accuracy/macro-F1, priority band κ, fault top-1/top-3, citation verification
   rate, compliance findings per draft, action precision, draft edit distance, JSON validity, p50/p95
@@ -855,28 +855,28 @@ model, wrapped) · **Acceptance** WER ≤0.25 on the sample calls; recall@5 ≥0
 - Metrics are logged with the same key names the evaluation harness uses, so notebook runs and
   harness runs are directly comparable in the MLflow UI.
 - `promote_if_better` refuses to promote when the dataset fingerprint differs from the champion's
-  unless `force=True` — otherwise you eventually promote a model that only looks better because the
+  unless `force=True`, otherwise you eventually promote a model that only looks better because the
   split changed.
 
 ---
 
 ## 10. Evaluation harness (`evaluation/`)
 
-- `datasets/bitext.py` — loads the extracted CSV, applies `config/department_map.yaml`, returns the
+- `datasets/bitext.py`, loads the extracted CSV, applies `config/department_map.yaml`, returns the
   frozen splits from notebook 01 (never re-splits; the split column is authoritative).
-- `datasets/roboflow_router.py` — COCO loader, class collapse to `PortObservation.port_type`, the
+- `datasets/roboflow_router.py`, COCO loader, class collapse to `PortObservation.port_type`, the
   leakage-corrected split, and an iterator yielding `(image_path, annotations)`.
-- `datasets/telecom.py` — the supplement, with the `source` column preserved so template rows and
+- `datasets/telecom.py`, the supplement, with the `source` column preserved so template rows and
   LLM-paraphrased rows can be scored separately.
-- `datasets/synthetic.py` — generates multimodal tickets by pairing a telecom text complaint, a
+- `datasets/synthetic.py`, generates multimodal tickets by pairing a telecom text complaint, a
   reused audio sample, and a router image, with ground-truth labels attached.
-- `mlflow_utils.py` — `start_run`, `log_dataset_fingerprint`, `promote_if_better`, `resolve_champion`.
-- `harness/run.py` — drives the pipeline in-process (the "same code, different driver" seam of
+- `mlflow_utils.py`, `start_run`, `log_dataset_fingerprint`, `promote_if_better`, `resolve_champion`.
+- `harness/run.py`, drives the pipeline in-process (the "same code, different driver" seam of
   UC-8), collects per-stage timings from `libs/observability/metrics`, computes the metric set
   above, writes JSON + CSV + Markdown to `evaluation/reports/`, **and logs the whole run to MLflow**
   under `cst/e2e` so a pipeline evaluation is comparable with the notebook runs that produced its
   models.
-- `harness/metrics.py` — department accuracy/macro-F1, priority band κ, fault top-k, citation
+- `harness/metrics.py`, department accuracy/macro-F1, priority band κ, fault top-k, citation
   verification rate, draft edit distance, JSON validity, p50/p95 stage latency.
 
 ---
@@ -905,13 +905,13 @@ model, wrapped) · **Acceptance** WER ≤0.25 on the sample calls; recall@5 ≥0
 
 ## 12. Suggested execution order (each line is one work session)
 
-1. Steps 1–2 (scaffold, config) → `import libs.domain` works.
+1. Steps 1-2 (scaffold, config) → `import libs.domain` works.
 2. Step 3 (domain) + unit tests → policies green.
-3. Step 4.1–4.3 (broker, DB, object store) + step 7 (migrations, seed).
-4. Step 4.4–4.6 with **stubs only**, then services 1–6 → `APP_PROFILE=stub` reaches `AGGREGATED`.
-5. Services 7–11 with stubs → `READY_FOR_AGENT` end to end; integration + degradation tests.
+3. Step 4.1-4.3 (broker, DB, object store) + step 7 (migrations, seed).
+4. Step 4.4-4.6 with **stubs only**, then services 1-6 → `APP_PROFILE=stub` reaches `AGGREGATED`.
+5. Services 7-11 with stubs → `READY_FOR_AGENT` end to end; integration + degradation tests.
 6. Real adapters: faster-whisper, Ollama LLM, Ollama vision, sentence-transformers.
-7. Services 12–16 (workspace/admin/knowledge/delivery/action).
+7. Services 12-16 (workspace/admin/knowledge/delivery/action).
 8. MLflow server up + `mlflow_registry.py` + `evaluation/mlflow_utils.py`; prove resolution and the
    MLflow-down fallback with a test before any notebook trains anything.
 9. Notebook 01 (data ingestion, the department map, the telecom supplement, the leakage check).
@@ -920,9 +920,9 @@ model, wrapped) · **Acceptance** WER ≤0.25 on the sample calls; recall@5 ≥0
 10. Notebooks 02→03→04 (department, intent, sentiment/priority) → the pipeline gets its first real
     models through the MLflow champion path.
 11. Notebooks 06→07→08 (port detector, VLM prompts, ASR and retrieval).
-12. Agentic response service (§5.10) on top of the working single-call path — build the fallback
+12. Agentic response service (§5.10) on top of the working single-call path, build the fallback
     first, the agent second, so there is always something that works.
-13. Notebook 05 (LLM fine-tune) — late, because the prompt baseline already unblocks everything and
+13. Notebook 05 (LLM fine-tune), late, because the prompt baseline already unblocks everything and
     this is the step most likely to be blocked by hardware.
 14. Notebook 09 + evaluation report + all documents of §11.
 
@@ -932,7 +932,7 @@ model, wrapped) · **Acceptance** WER ≤0.25 on the sample calls; recall@5 ≥0
 
 | # | Symptom | Likely cause | Fix / debug |
 |---|---|---|---|
-| 1 | Ticket never leaves `PROCESSING` | aggregation completion set never satisfied — a failed attachment produced no `done` event | inspect `aggregation_state`; ensure failure paths still publish `done` with `status=failed`; confirm the sweeper thread is running (`log stage=aggregator event=sweep`) |
+| 1 | Ticket never leaves `PROCESSING` | aggregation completion set never satisfied, a failed attachment produced no `done` event | inspect `aggregation_state`; ensure failure paths still publish `done` with `status=failed`; confirm the sweeper thread is running (`log stage=aggregator event=sweep`) |
 | 2 | LLM returns prose, `json.JSONDecodeError` | small quantised model ignoring `format: json` | `_extract_json()` fallback, then one repair call; lower temperature to 0.1; shorten the prompt; verify the model tag actually supports instructions (`ollama show <model>`) |
 | 3 | `httpx.ReadTimeout` on the first LLM call | cold model load | pre-warm at startup; raise `llm_timeout_s`; `ollama ps` to confirm the model is resident |
 | 4 | `connection refused` to 11434 | `ollama serve` not running, or bound to another host | `curl /api/tags`; on Windows check the tray service; set `OLLAMA_HOST=0.0.0.0` if calling from a container |
@@ -940,7 +940,7 @@ model, wrapped) · **Acceptance** WER ≤0.25 on the sample calls; recall@5 ≥0
 | 6 | `sqlite3.OperationalError: database is locked` | concurrent writes from broker threads | WAL mode, short transactions, one session per handler, `timeout=30` in `connect_args` |
 | 7 | Classifier predicts only 3 departments | Bitext has no telecom classes | the telecom supplement of notebook 01 is mandatory; also check `class_weight="balanced"` |
 | 8 | Citations always unverified | chunk ids in the prompt differ from those in the retrieved context (truncation or renumbering) | print the context id list next to the model output; use short opaque ids (`c17`) in the prompt and map back |
-| 9 | Retrieval quality collapses after changing the embedding model | index built with a different model | the vector store must refuse mismatched `embedding_model` — verify that guard exists and rebuild the index |
+| 9 | Retrieval quality collapses after changing the embedding model | index built with a different model | the vector store must refuse mismatched `embedding_model`, verify that guard exists and rebuild the index |
 | 10 | VLM invents LEDs that are not in the image | over-permissive prompt | constrain the prompt to "report only what is visible; use `unknown`"; lower temperature; cross-check with the heuristic extractor and flag disagreement |
 | 11 | WER far worse than published Whisper numbers | 8 kHz telephone audio, wrong sample rate, or the wrong language hint | resample to 16 kHz mono; pass `language="en"`; try `small`; report per-segment confidence |
 | 12 | `import services.x` fails in tests | missing `__init__.py` or the package not reinstalled after adding a directory | `pip install -e .` again; run pytest from `v1/` |
@@ -948,14 +948,14 @@ model, wrapped) · **Acceptance** WER ≤0.25 on the sample calls; recall@5 ≥0
 | 14 | QLoRA OOM | 8B on <12 GB VRAM | 3B base, `gradient_checkpointing=True`, `max_seq_len=512`, batch 1 |
 | 15 | `ollama create` fails on the GGUF | converted the adapter instead of the merged model, or an unsupported architecture | `merge_and_unload()` first, then convert; check `llama.cpp` supports the base architecture |
 | 16 | Agent loops until the step budget every time | the model never calls `emit_draft`, or repeats one tool | dump the `agent_trace` rows for the ticket; deduplicate identical `(tool, args)`; make `emit_draft` the only tool described as terminal and say so in the system prompt; check whether `tool_calls` is being returned at all, else switch to the ReAct protocol |
-| 17 | Agent output degrades after the LoRA fine-tune | JSON-only training destroyed tool-calling ability | test tool-calling explicitly before promoting (notebook 05); keep the base model as the agent's generator and use the fine-tune only for diagnosis if they conflict — `llm_model` and the agent's model are allowed to differ |
+| 17 | Agent output degrades after the LoRA fine-tune | JSON-only training destroyed tool-calling ability | test tool-calling explicitly before promoting (notebook 05); keep the base model as the agent's generator and use the fine-tune only for diagnosis if they conflict, `llm_model` and the agent's model are allowed to differ |
 | 18 | Agent's system rules stop being obeyed after step 3 | conversation exceeded `num_ctx`, Ollama truncated from the front | raise `num_ctx`, truncate observations to ~800 chars, re-inject the rules in the final "now write the reply" turn |
-| 19 | `mlflow.exceptions.RestException: RESOURCE_DOES_NOT_EXIST` at startup | the `@champion` alias was never set, or the registry is empty | the resolver must fall back to the local artefact and flag `MODEL_FALLBACK`, not crash — if it crashed, the fallback path is missing; set the alias with `promote_if_better(force=True)` for the first version |
+| 19 | `mlflow.exceptions.RestException: RESOURCE_DOES_NOT_EXIST` at startup | the `@champion` alias was never set, or the registry is empty | the resolver must fall back to the local artefact and flag `MODEL_FALLBACK`, not crash, if it crashed, the fallback path is missing; set the alias with `promote_if_better(force=True)` for the first version |
 | 20 | Every run logs to `Default` and metrics are unusable | `mlflow.set_experiment` missing or the tracking URI defaulted to `./mlruns` | assert the resolved tracking URI in cell 1 and fail loudly if it is a local path when the server is expected |
 | 21 | Champion model silently changed and results moved | someone promoted from a run trained on a different split | `promote_if_better` compares dataset fingerprints; do not add `force=True` to make a promotion "work" |
 | 22 | Port detector mAP looks excellent but the pipeline gets nothing useful | COCO category 0 (`router-detection` super-category) counted as a class, or augmented duplicates of the same source image split across train and test | exclude category 0; group by the pre-`.rf.` filename stem when splitting (notebook 01 checks this) |
 | 23 | Detector finds ports on images that contain no router | the dataset is mostly close-ups; the model has no negative class | add a confidence floor, and cross-check with the VLM's own device detection before writing `ports[]` into the payload |
-| 24 | Classifier confidences are all ~0.99 | `LinearSVC` decision function passed off as a probability | calibrate (`CalibratedClassifierCV`) — the triage threshold is meaningless otherwise |
+| 24 | Classifier confidences are all ~0.99 | `LinearSVC` decision function passed off as a probability | calibrate (`CalibratedClassifierCV`), the triage threshold is meaningless otherwise |
 
 ---
 
@@ -965,7 +965,7 @@ model, wrapped) · **Acceptance** WER ≤0.25 on the sample calls; recall@5 ≥0
 - `python -m runtime.demo_ticket` with Ollama running produces, for a text+audio+image ticket: a
   validated `UnifiedTicketPayload` with correct provenance spans, a triage result with department and
   band, a diagnosis with at least one verified citation, a compliant draft reply, and a registry-backed
-  action recommendation — all persisted and visible through `GET /api/v1/tickets/{id}`.
+  action recommendation, all persisted and visible through `GET /api/v1/tickets/{id}`.
 - Approval through `workspace_api` writes an `agent_decision` and a `delivery` whose `approval_id`
   is non-null; attempting delivery without it fails.
 - `evaluation/reports/e2e_report.md` exists with the metric table.

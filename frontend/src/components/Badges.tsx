@@ -82,7 +82,7 @@ export function FlagChips({ flags }: { flags: string[] }) {
 
 /** UI-2 SLA countdown. Renders overdue explicitly rather than as a negative number. */
 export function SlaCountdown({ dueAt }: { dueAt: string | null }) {
-  if (!dueAt) return <span className="text-xs text-slate-400">—</span>;
+  if (!dueAt) return <span className="text-xs text-slate-400">,</span>;
   const minutes = (new Date(dueAt).getTime() - Date.now()) / 60000;
   if (minutes < 0) {
     return <span className="text-xs font-semibold text-critical">Overdue {formatMinutes(-minutes)}</span>;

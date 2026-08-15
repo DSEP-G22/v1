@@ -1,4 +1,4 @@
-"""REQ-FLT-1..14 — retrieval, LLM diagnosis, citation verification. Consumes tickets.triaged,
+"""REQ-FLT-1..14, retrieval, LLM diagnosis, citation verification. Consumes tickets.triaged,
 writes diagnosis + citation, publishes tickets.diagnosed."""
 
 from __future__ import annotations

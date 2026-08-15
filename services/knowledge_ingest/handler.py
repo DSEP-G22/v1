@@ -1,4 +1,4 @@
-"""REQ-ONB-1..10 — parses Markdown/PDF/TXT into heading-aware chunks, embeds them, upserts the
+"""REQ-ONB-1..10, parses Markdown/PDF/TXT into heading-aware chunks, embeds them, upserts the
 vector index, and writes knowledge_document/knowledge_chunk plus a data-quality report.
 
 Not a broker consumer: called directly by scripts/seed.py and admin_api's onboarding endpoint."""
@@ -32,7 +32,7 @@ def _read_text(path: Path) -> str:
 
 
 def _extract_entities(text: str, max_entities: int = 20) -> list[str]:
-    """Cheap capitalised-phrase heuristic — good enough to flag candidate device models / fault
+    """Cheap capitalised-phrase heuristic, good enough to flag candidate device models / fault
     names for a human reviewer; not fed back into the (static, seeded) demo graph in v1."""
     seen: list[str] = []
     for m in _ENTITY_RE.finditer(text):

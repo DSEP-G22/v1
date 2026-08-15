@@ -1,11 +1,11 @@
-"""Sniffs file type from magic bytes — never trust the declared MIME type / filename."""
+"""Sniffs file type from magic bytes, never trust the declared MIME type / filename."""
 
 from __future__ import annotations
 
 from libs.domain.enums import Modality
 
 _SIGNATURES: list[tuple[bytes, int, str, Modality]] = [
-    (b"RIFF", 0, "audio/wav", Modality.audio),  # WAVE has "WAVE" at offset 8, checked separately
+    (b"RIFF", 0, "audio/wav", Modality.audio), # WAVE has "WAVE" at offset 8, checked separately
     (b"ID3", 0, "audio/mpeg", Modality.audio),
     (b"\xff\xfb", 0, "audio/mpeg", Modality.audio),
     (b"\xff\xf3", 0, "audio/mpeg", Modality.audio),

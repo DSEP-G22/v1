@@ -1,4 +1,4 @@
-"""REQ-VLM-1..12 — extracts structured fields from an image attachment. Mirrors audio_svc's
+"""REQ-VLM-1..12, extracts structured fields from an image attachment. Mirrors audio_svc's
 failure handling: a terminal failure still publishes tickets.image.done with status=failed."""
 
 from __future__ import annotations

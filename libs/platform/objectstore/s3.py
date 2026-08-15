@@ -1,4 +1,4 @@
-"""S3/MinIO object store adapter — same ObjectStorePort as the local filesystem adapter.
+"""S3/MinIO object store adapter, same ObjectStorePort as the local filesystem adapter.
 Not used by any default profile in v1 (SAD deviation table: MinIO -> local filesystem); kept so
 a deployment can switch by config without touching service code. Requires `boto3`, imported
 lazily so the base install never needs the wheel."""

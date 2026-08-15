@@ -6,15 +6,15 @@
 - Drops correlate with time of day (evening congestion) or weather (outdoor cabling).
 
 ## Diagnosis
-1. Ask when drops occur — congestion-pattern drops (evenings, weekends) point to a capacity
+1. Ask when drops occur, congestion-pattern drops (evenings, weekends) point to a capacity
    fault; random all-day drops point to cabling or hardware.
 2. Run a remote line diagnostic (`run_line_diagnostic`) to check for repeated re-sync events in
    the last 24h, which corroborate an intermittent line fault.
 3. If diagnostics are clean and drops persist, the fault is most likely on-premises wiring or a
-   failing router — schedule a technician visit.
+   failing router, schedule a technician visit.
 
 ## Procedure: Run remote line diagnostic
-See `sop_line_sync.md` — same action, interpreted here for intermittent (not total) loss
+See `sop_line_sync.md`, same action, interpreted here for intermittent (not total) loss
 patterns.
 
 ## Procedure: Escalate to field service for on-site repair

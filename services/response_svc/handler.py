@@ -1,4 +1,4 @@
-"""REQ-RES-1..12 — drafts a customer reply, runs compliance checks, selects an action
+"""REQ-RES-1..12, drafts a customer reply, runs compliance checks, selects an action
 recommendation, and transitions the ticket to READY_FOR_AGENT."""
 
 from __future__ import annotations
@@ -92,7 +92,7 @@ def handle(ports: Ports, engine: Engine, settings: Settings, envelope: EventEnve
         logger.exception("response_svc: draft generation failed ticket_id=%s", ticket_id)
         draft_out = _DraftOut(ai_text="")
 
-    ai_text = draft_out.ai_text or "Hi, thanks for reaching out — we're looking into this now."
+    ai_text = draft_out.ai_text or "Hi, thanks for reaching out, we're looking into this now."
     findings = compliance_policy.check(ai_text)
 
     registry_entries = _to_registry_entries(registry_rows)

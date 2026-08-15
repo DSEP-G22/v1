@@ -101,7 +101,7 @@ function AudioEvidence({ attachment }: { attachment: Attachment }) {
 
       {transcript?.low_confidence ? (
         <p className="mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          Low transcription confidence — verify the passage against the audio before relying on it.
+          Low transcription confidence, verify the passage against the audio before relying on it.
         </p>
       ) : null}
 
@@ -190,7 +190,7 @@ function ImageEvidence({ attachment }: { attachment: Attachment }) {
 
       {summary?.low_confidence ? (
         <p className="mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          Low extraction confidence — check the image before relying on the extracted fields.
+          Low extraction confidence, check the image before relying on the extracted fields.
         </p>
       ) : null}
 

@@ -37,13 +37,13 @@ def _imported_names(py_file: Path) -> list[str]:
 # knowledge_ingest is the same shape: it consumes no topic and is invoked synchronously by
 # scripts/seed.py and by the admin API's UI-6 onboarding upload, because ingesting a document is
 # a request/response operation whose per-document report the administrator must see immediately.
-# It still owns knowledge_document/knowledge_chunk exclusively — test_single_writer.py enforces
+# It still owns knowledge_document/knowledge_chunk exclusively, test_single_writer.py enforces
 # that, so importing it does not grant anyone else write access to those tables.
 _LIBRARY_SERVICES = {"retrieval_svc", "knowledge_ingest"}
 
 # workspace_api is the one place a human agent acts, and REQ-WKS explicitly requires it to
 # trigger delivery (approve) and action execution (execute) synchronously and to keep the queue
-# projection in sync after a lock/approve/reject — so it calls those services' public functions
+# projection in sync after a lock/approve/reject, so it calls those services' public functions
 # directly rather than through an async topic. This is the single documented exception to "no
 # service imports another service"; it does NOT grant table access (test_single_writer.py still
 # enforces that each table has exactly one writer).

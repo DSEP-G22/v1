@@ -1,4 +1,4 @@
-Look at this photo of a router/modem's LED indicator panel. Report only what is visible — do not
+Look at this photo of a router/modem's LED indicator panel. Report only what is visible, do not
 guess at LEDs that are not clearly shown, and use "unknown" for anything you cannot determine.
 
 Identify:

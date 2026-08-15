@@ -6,7 +6,7 @@
 - Power LED blinking red, router stuck in a reboot loop.
 
 ## Diagnosis
-1. Confirm the power adapter is the original unit rated for this router model — third-party
+1. Confirm the power adapter is the original unit rated for this router model, third-party
    adapters under-supply current and cause a solid red power LED.
 2. If the power LED blinks red continuously and the router never reaches a steady state within
    3 minutes, suspect a firmware crash loop rather than a hardware fault.

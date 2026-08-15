@@ -1,4 +1,4 @@
-"""`build_ports(settings) -> Ports` — the only place adapters are constructed (ADR-005: no
+"""`build_ports(settings) -> Ports`, the only place adapters are constructed (ADR-005: no
 service constructs an adapter directly). Also loads config/registry.yaml so artefacts can be
 stamped with a model_version."""
 

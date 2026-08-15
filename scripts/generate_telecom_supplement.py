@@ -1,4 +1,4 @@
-"""Generates data/telecom_supplement.csv — hand-authored template rows covering
+"""Generates data/telecom_supplement.csv, hand-authored template rows covering
 network_operations and field_service, the two departments Bitext has zero coverage for (see
 notebooks/01_data_preparation.ipynb and config/department_map.yaml).
 
@@ -53,12 +53,12 @@ NETWORK_TEMPLATES: list[tuple[str, str]] = [
 
 NETWORK_RESPONSES: dict[str, str] = {
     "no_internet_connection": "I'm sorry your internet is down. Let's start by power-cycling your {router}: unplug it for 30 seconds, then plug it back in and wait 2 minutes. Let me know if the internet light comes back on.",
-    "router_led_issue": "Thanks for describing the light on your {router}. That colour usually points to a specific fault — I'll run a remote diagnostic on your line now and follow up with next steps.",
+    "router_led_issue": "Thanks for describing the light on your {router}. That colour usually points to a specific fault, I'll run a remote diagnostic on your line now and follow up with next steps.",
     "slow_internet_speed": "I understand slow speeds are frustrating. I'll run a line diagnostic to check your sync rate against your plan speed and let you know what I find.",
     "intermittent_connection": "Intermittent drops are usually a line-sync or cabling issue. I'll check your connection history for repeated re-sync events over the last 24 hours.",
     "no_dial_tone": "I'm sorry about the phone line. I'll trigger a remote line diagnostic to check for a dial-tone fault on your circuit.",
     "line_synchronization_issue": "A line stuck synchronising usually clears after a power-cycle, but if it persists I'll escalate to a line diagnostic on our end.",
-    "area_outage_report": "Thanks for flagging this — I'll check our outage map for your area right away and update you as soon as I have more information.",
+    "area_outage_report": "Thanks for flagging this, I'll check our outage map for your area right away and update you as soon as I have more information.",
 }
 
 FIELDSERVICE_TEMPLATES: list[tuple[str, str]] = [
@@ -84,7 +84,7 @@ FIELDSERVICE_RESPONSES: dict[str, str] = {
     "schedule_technician_visit": "I can arrange an on-site visit. Let me check the earliest available slot for your address and confirm the appointment window with you.",
     "missed_technician_appointment": "I'm really sorry the technician didn't arrive as scheduled. I'll escalate this and get you rebooked for the earliest available slot, with priority handling.",
     "equipment_installation_request": "Happy to help set up service at your new address. I'll get an installation appointment booked and confirm what our technician will bring on the day.",
-    "cabling_issue_onsite": "Thanks for reporting this — damaged cabling needs an on-site inspection. I'll schedule a technician to check and repair the wiring.",
+    "cabling_issue_onsite": "Thanks for reporting this, damaged cabling needs an on-site inspection. I'll schedule a technician to check and repair the wiring.",
     "technician_visit_status": "Let me check the current status of your scheduled visit and give you an updated arrival window.",
 }
 

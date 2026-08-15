@@ -1,7 +1,7 @@
 """Machine-readable single-writer ownership table (SAD §5.2.2), consumed by
 tests/architecture/test_single_writer.py. Maps each repository's *mutating* methods to the one
 or more `services/*` packages allowed to call them. Read methods (get*, list*, first) are
-unrestricted — the ownership rule is about who may change a table, not who may read it.
+unrestricted, the ownership rule is about who may change a table, not who may read it.
 
 Services not yet built (delivery_gateway, action_svc, workspace_api, admin_api, knowledge_ingest)
 are still listed here so the rule is already correct once those packages exist."""

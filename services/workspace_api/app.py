@@ -57,7 +57,7 @@ def build_app(ports: Ports, engine: Engine, settings: Settings) -> FastAPI:
     @app.get("/me")
     def get_me(user: CurrentUser = Depends(get_current_user)) -> dict:
         """UI-1: the login screen exchanges a token for the identity behind it. A wrong token
-        returns 401 with a generic message — it never discloses whether a user exists."""
+        returns 401 with a generic message, it never discloses whether a user exists."""
         return {"user_id": user.user_id, "username": user.username, "role": user.role}
 
     @app.get("/queue")

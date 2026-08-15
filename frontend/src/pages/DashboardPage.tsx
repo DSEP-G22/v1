@@ -9,8 +9,8 @@ import { ErrorPanel } from "../components/ErrorPanel";
 
 const AGEING_LABELS: Record<string, string> = {
   lt_1h: "< 1h",
-  h1_4: "1–4h",
-  h4_24: "4–24h",
+  h1_4: "1-4h",
+  h4_24: "4-24h",
   gt_24h: "> 24h",
 };
 
@@ -144,7 +144,7 @@ export function DashboardPage() {
                     </Link>
                   </td>
                   <td className="py-1">{row.department}</td>
-                  <td className="py-1">{row.priority_band ?? "—"}</td>
+                  <td className="py-1">{row.priority_band ?? ","}</td>
                   <td className={`py-1 font-mono ${row.breached ? "font-semibold text-critical" : ""}`}>
                     {row.breached ? `overdue ${Math.abs(row.minutes_left).toFixed(0)}m` : `${row.minutes_left.toFixed(0)}m`}
                   </td>
@@ -192,5 +192,5 @@ function Stat({
 }
 
 function percent(value: number | null): string {
-  return value === null || value === undefined ? "—" : `${Math.round(value * 100)}%`;
+  return value === null || value === undefined ? "," : `${Math.round(value * 100)}%`;
 }

@@ -1,4 +1,4 @@
-"""Ticket intake — REQ-ING-1..15. Validates media by sniffing magic bytes (never the declared
+"""Ticket intake, REQ-ING-1..15. Validates media by sniffing magic bytes (never the declared
 MIME type), stores it, and writes ticket + attachment + outbox(tickets.raw) in one transaction."""
 
 from __future__ import annotations

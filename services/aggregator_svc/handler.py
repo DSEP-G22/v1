@@ -1,7 +1,7 @@
-"""REQ-FUS-1..10 — the statechart of SAD §6.5. Records each per-modality result idempotently
+"""REQ-FUS-1..10, the statechart of SAD §6.5. Records each per-modality result idempotently
 against `aggregation_state`; emits when the completion set is satisfied, or emits a partial
 payload when the window expires. The timer is a single sweeper thread scanning for expired rows
-every 5s (see `sweep`) — never a per-ticket `threading.Timer`."""
+every 5s (see `sweep`), never a per-ticket `threading.Timer`."""
 
 from __future__ import annotations
 
@@ -203,7 +203,7 @@ def handle_image_done(ports: Ports, engine: Engine, settings: Settings, envelope
 
 def sweep(ports: Ports, engine: Engine, settings: Settings) -> int:
     """Scans for expired aggregation windows and finalises them as partial payloads. Called by
-    a single background sweeper thread every 5s — never one threading.Timer per ticket."""
+    a single background sweeper thread every 5s, never one threading.Timer per ticket."""
     finalized = 0
     with session_scope(engine) as session:
         now = datetime.now(timezone.utc)

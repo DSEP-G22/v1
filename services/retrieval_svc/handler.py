@@ -1,4 +1,4 @@
-"""Retrieval library — not a broker consumer. Dense top-k over the vector index, graph expansion
+"""Retrieval library, not a broker consumer. Dense top-k over the vector index, graph expansion
 from extracted entities, then a bounded context assembler (max ~2500 chars, dedupe by chunk id).
 Used by orchestrator_svc."""
 
@@ -85,7 +85,7 @@ def assemble_context(ports: Ports, query_text: str, department: str | None = Non
 
 
 def safe_assemble_context(ports: Ports, query_text: str, department: str | None = None, k: int = TOP_K) -> RetrievalContext:
-    """Same as assemble_context, but never raises — a degraded embedder/vector index/graph
+    """Same as assemble_context, but never raises, a degraded embedder/vector index/graph
     store must not block diagnosis/response generation; it should just retrieve nothing
     (REQ-FLT degradation: G7)."""
     try:

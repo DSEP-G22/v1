@@ -106,7 +106,7 @@ def put_routing_rules(engine: Engine, *, rules: list[dict], changed_by: str) -> 
 
 
 def get_thresholds(settings: Settings) -> dict:
-    """Read-only: hot-reloading pydantic-settings safely is out of scope for v1 — changing a
+    """Read-only: hot-reloading pydantic-settings safely is out of scope for v1, changing a
     threshold requires editing .env and restarting."""
     return {
         "asr_low_confidence_threshold": settings.asr_low_confidence_threshold,
@@ -189,7 +189,7 @@ def ingest_uploaded_document(
 
 
 def search_knowledge(ports: Ports, query: str, k: int = 5) -> list[dict]:
-    """UI-6 knowledge-base search preview — the same dense query path the retrieval service uses,
+    """UI-6 knowledge-base search preview, the same dense query path the retrieval service uses,
     so what the administrator previews is what the pipeline will retrieve."""
     vector = ports.embedder.embed([query])[0]
     return [

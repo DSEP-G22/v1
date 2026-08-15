@@ -1,4 +1,4 @@
-"""Department routing — first matching rule wins, else the classifier's department."""
+"""Department routing, first matching rule wins, else the classifier's department."""
 
 from __future__ import annotations
 

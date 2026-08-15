@@ -1,4 +1,4 @@
-"""Broker envelope and topic names — SAD §6.4 / Figure 9."""
+"""Broker envelope and topic names, SAD §6.4 / Figure 9."""
 
 from __future__ import annotations
 

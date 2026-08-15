@@ -41,7 +41,7 @@ def init_db(engine: Engine) -> None:
 
 @contextmanager
 def session_scope(engine: Engine) -> Iterator[Session]:
-    """One session per handler invocation. Never call broker.produce() inside this scope —
+    """One session per handler invocation. Never call broker.produce() inside this scope,
     use the outbox instead, or publishing on rollback produces ghost events."""
     factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
     session = factory()

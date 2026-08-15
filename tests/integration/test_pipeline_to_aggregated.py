@@ -118,7 +118,7 @@ def test_sweep_finalizes_expired_partial_payload(tmp_path, monkeypatch):
 
     broker = InProcessBroker(max_retries=1)
     broker.subscribe(Topics.TICKETS_RAW, "routing_svc", lambda env: routing_handle(ports, engine, settings, env))
-    # Deliberately do NOT wire audio_svc — its attachment will never produce a done event, so
+    # Deliberately do NOT wire audio_svc, its attachment will never produce a done event, so
     # only the window sweep can close this ticket out as partial.
     broker.subscribe(Topics.TICKETS_TEXT_WORK, "text_svc", lambda env: text_handle(ports, engine, settings, env))
     broker.subscribe(

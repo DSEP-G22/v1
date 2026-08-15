@@ -5,7 +5,7 @@ import { ApiError, api, setToken } from "../api/client";
 import type { CurrentUser } from "../api/types";
 
 // UI-1. v1 authenticates with the static per-role bearer tokens described in
-// libs/platform/auth.py — there is no password store yet, so the form takes the token as the
+// libs/platform/auth.py, there is no password store yet, so the form takes the token as the
 // credential. The error message is deliberately identical for "no such user" and "wrong token".
 
 export function LoginPage() {

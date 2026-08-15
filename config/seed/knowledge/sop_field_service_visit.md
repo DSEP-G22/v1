@@ -11,7 +11,7 @@
    priority band.
 3. Book via `schedule_technician_visit` with `address_id` and `earliest_date`.
 4. Summarise, in the draft reply, what the technician will check and roughly how long the visit
-   takes (typically 30–60 minutes) — do not promise an exact arrival time, only a window.
+   takes (typically 30-60 minutes), do not promise an exact arrival time, only a window.
 
 ## Escalation
 If a second visit is required for the same fault within 14 days, flag the ticket `critical`

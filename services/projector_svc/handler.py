@@ -1,5 +1,5 @@
 """Maintains `queue_projection` from `tickets.ready` and from workspace commands (lock/state
-changes wired in workspace_api). The queue read path never joins the analysis tables — it reads
+changes wired in workspace_api). The queue read path never joins the analysis tables, it reads
 this projection only."""
 
 from __future__ import annotations

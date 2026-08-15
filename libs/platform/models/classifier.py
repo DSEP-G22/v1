@@ -20,7 +20,7 @@ _KEYWORD_TABLE: dict[Department, list[str]] = {
 
 
 class RuleOnlyClassifier:
-    """Keyword-table fallback classifier — used when no sklearn artifact and no LLM are available."""
+    """Keyword-table fallback classifier, used when no sklearn artifact and no LLM are available."""
 
     def classify(self, text: str) -> tuple[Department, float, list[tuple[Department, float]]]:
         lowered = text.lower()

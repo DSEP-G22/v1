@@ -1,6 +1,6 @@
 # Profile definitions for APP_PROFILE. Values here are defaults; env vars / .env override them.
 # "stub" forces every *_impl field to a stub regardless of what is listed below (see
-# libs/platform/config.py) — this is the CI profile of SAD §8.2.3.
+# libs/platform/config.py), this is the CI profile of SAD §8.2.3.
 
 profiles:
   stub:

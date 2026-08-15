@@ -1,4 +1,4 @@
-"""Analysis-stage contracts — SAD §5.2.1 Figure 4 (TriageResult through ActionRecommendation)."""
+"""Analysis-stage contracts, SAD §5.2.1 Figure 4 (TriageResult through ActionRecommendation)."""
 
 from __future__ import annotations
 

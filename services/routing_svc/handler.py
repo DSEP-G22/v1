@@ -1,4 +1,4 @@
-"""REQ-ING-8, REQ-FUS-4 — consumes tickets.raw, opens the aggregation window with the expected
+"""REQ-ING-8, REQ-FUS-4, consumes tickets.raw, opens the aggregation window with the expected
 completion set, and fans out to the three .work topics."""
 
 from __future__ import annotations

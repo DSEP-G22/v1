@@ -93,7 +93,7 @@ export function ActPanel({ ticket, user }: { ticket: TicketDetail; user: Current
 
       {/* UI-7: persistent, not dismissible. */}
       <p role="note" className="rounded border border-amber-400 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
-        AI-generated — review before sending.
+        AI-generated, review before sending.
       </p>
 
       <div className="card p-4">
@@ -135,7 +135,7 @@ export function ActPanel({ ticket, user }: { ticket: TicketDetail; user: Current
                     key={`${finding.code ?? index}`}
                     className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
                   >
-                    <span className="font-mono">{finding.code ?? "policy"}</span> — {finding.message ?? "Policy finding"}
+                    <span className="font-mono">{finding.code ?? "policy"}</span>, {finding.message ?? "Policy finding"}
                   </li>
                 ))}
               </ul>

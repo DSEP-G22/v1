@@ -55,7 +55,7 @@ export function AppShell() {
       <header className="bg-slate-900 text-white">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-8">
-            <span className="text-sm font-semibold tracking-wide">Support Triage — Agent Workspace</span>
+            <span className="text-sm font-semibold tracking-wide">Support Triage, Agent Workspace</span>
             <nav aria-label="Main" className="flex gap-1">
               {NAV.filter((item) => item.roles.includes(role)).map((item) => (
                 <NavLink

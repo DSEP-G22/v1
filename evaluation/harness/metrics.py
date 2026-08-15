@@ -1,7 +1,7 @@
 """Metric functions for the evaluation harness: department accuracy/macro-F1, priority band
 kappa, fault top-k, citation verification rate, draft edit distance, JSON validity, and
 per-stage p50/p95 latency (derived from `ticket_state_transition`, which every ticket already
-gets for free from `TicketRepo.update_state` — no extra instrumentation needed)."""
+gets for free from `TicketRepo.update_state`, no extra instrumentation needed)."""
 
 from __future__ import annotations
 

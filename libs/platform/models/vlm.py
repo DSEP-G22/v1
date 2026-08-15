@@ -65,7 +65,7 @@ class StubExtractor:
 
 
 class HeuristicLedExtractor:
-    """HSV-mask based LED colour/position detector — port of the prototype's
+    """HSV-mask based LED colour/position detector, port of the prototype's
     `image_ingest._run_vlm`. Kept as the offline fallback when Ollama vision is unavailable."""
 
     def __init__(self, low_confidence_threshold: float = 0.55) -> None:

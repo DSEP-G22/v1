@@ -1,4 +1,4 @@
-# 01 — Setup
+# 01, Setup
 
 ## Prerequisites
 
@@ -15,14 +15,14 @@
    The `stub` profile (used for CI and by default in this environment) needs none of this.
 3. The two datasets in `d:\DSEP22\data\` stay zipped in the repo; `notebooks/01_data_preparation.ipynb`
    extracts the Bitext CSV to `v1/data/raw/` (git-ignored). The Roboflow router-detection zip is
-   read directly from the zip by `evaluation/datasets/roboflow_router.py` — never extracted in
+   read directly from the zip by `evaluation/datasets/roboflow_router.py`, never extracted in
    bulk.
 4. Work from `d:\DSEP22\v1` as the working directory for every command below.
 
 ## Install
 
 This repo uses [uv](https://docs.astral.sh/uv/) to manage the virtual environment (plain `pip`/
-`venv` work identically if you prefer them — there is nothing uv-specific in the package itself).
+`venv` work identically if you prefer them, there is nothing uv-specific in the package itself).
 
 ```
 uv venv --python 3.12.11 .venv
@@ -40,7 +40,7 @@ uv pip install -e ".[ml]" --python .venv
 
 ## Profiles
 
-`APP_PROFILE` selects a block from `config/settings.yaml` and — for `stub` specifically — forces
+`APP_PROFILE` selects a block from `config/settings.yaml` and, for `stub` specifically, forces
 every `*_impl` setting to a stub regardless of what the YAML/`.env` say:
 
 | Profile | ASR | VLM | LLM | Embedder | Broker | Use for |
@@ -78,7 +78,7 @@ APP_PROFILE=stub python -m runtime.local
 ```
 
 Auth for `workspace_api`/`admin_api` is a static bearer token per role from `.env`
-(`AUTH_TOKEN_AGENT`, `AUTH_TOKEN_LEAD`, `AUTH_TOKEN_ADMIN`) — enough to exercise the authorization
+(`AUTH_TOKEN_AGENT`, `AUTH_TOKEN_LEAD`, `AUTH_TOKEN_ADMIN`), enough to exercise the authorization
 checks without an IdP. Example:
 
 ```
@@ -87,16 +87,16 @@ curl -H "Authorization: Bearer dev-agent-token" http://localhost:8000/workspace/
 
 ## Agent workspace UI
 
-The React workspace (SRS UI-1 to UI-7) is a **separate deployable** in `frontend/` — FastAPI does
+The React workspace (SRS UI-1 to UI-7) is a **separate deployable** in `frontend/`, FastAPI does
 not serve it. Run the two processes side by side. Node 20+ required.
 
-Terminal 1 — the API:
+Terminal 1, the API:
 
 ```
 APP_PROFILE=stub python -m runtime.local        # :8000
 ```
 
-Terminal 2 — the UI:
+Terminal 2, the UI:
 
 ```
 cd frontend
@@ -134,7 +134,7 @@ python scripts/seed.py --reset
 python -m runtime.demo_ticket
 ```
 
-The first Ollama call after `ollama serve` starts loads the model and can take 30-90s — the
+The first Ollama call after `ollama serve` starts loads the model and can take 30-90s, the
 `OllamaGenerator`/`OllamaVisionExtractor` timeout defaults (`llm_timeout_s=60`) may need raising
 for that first call; see `11-troubleshooting.md` #3.
 
@@ -145,8 +145,8 @@ for that first call; see `11-troubleshooting.md` #3.
   one across threads.
 - Multiple Python installs are common on Windows (Windows Store stub, MSYS/UCRT64, uv-managed).
   If `pip`/`python -m pip` fails with `ModuleNotFoundError: No module named 'encodings'` or
-  similar, you've hit a broken/partial interpreter — use `uv venv --python <version>` to get a
+  similar, you've hit a broken/partial interpreter, use `uv venv --python <version>` to get a
   known-good uv-managed CPython rather than debugging the broken one.
-- Long paths: keep the repo close to a drive root (e.g. `D:\DSEP22`) — deeply nested checkouts
+- Long paths: keep the repo close to a drive root (e.g. `D:\DSEP22`), deeply nested checkouts
   combined with `.venv/Lib/site-packages/...` can exceed Windows' default path-length limit with
   some ML packages.

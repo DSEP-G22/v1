@@ -1,6 +1,6 @@
-"""NumPy in-memory vector index, JSON-persisted. Small corpus (<10k chunks) — SAD deviation
+"""NumPy in-memory vector index, JSON-persisted. Small corpus (<10k chunks), SAD deviation
 table substitute for Qdrant. Refuses to query when the persisted `embedding_model` differs from
-the one this instance was configured with (SAD §9.4) — stale vectors silently degrade retrieval
+the one this instance was configured with (SAD §9.4), stale vectors silently degrade retrieval
 quality far worse than a loud failure."""
 
 from __future__ import annotations

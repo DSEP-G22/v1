@@ -152,7 +152,7 @@ class AggregationStateRepo:
 
 
 class AggregationReceivedItemRepo:
-    """Race-free completion tracking — see AggregationReceivedItemRow docstring."""
+    """Race-free completion tracking, see AggregationReceivedItemRow docstring."""
 
     def __init__(self, session: Session) -> None:
         self._session = session

@@ -1,4 +1,4 @@
-"""Local filesystem object store — same ObjectStorePort as the S3/MinIO adapter."""
+"""Local filesystem object store, same ObjectStorePort as the S3/MinIO adapter."""
 
 from __future__ import annotations
 

@@ -8,7 +8,7 @@ import { useToasts } from "../components/Toasts";
 // that runs the same dense query the retrieval service uses, so what is previewed here is what
 // the pipeline will actually retrieve.
 //
-// Historical ticket import is not implemented in v1 — the import path exists only as the
+// Historical ticket import is not implemented in v1, the import path exists only as the
 // evaluation dataset loader, so offering a button here would be a dead control.
 
 export function OnboardingPage() {
@@ -157,7 +157,7 @@ export function OnboardingPage() {
           {(search.data ?? []).map((hit, index) => (
             <li key={`${hit.chunk_id ?? index}`} className="rounded border border-slate-200 p-3">
               <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-mono">{hit.chunk_id ?? "—"}</span>
+                <span className="font-mono">{hit.chunk_id ?? ","}</span>
                 <span className="font-mono">score {hit.score.toFixed(3)}</span>
               </div>
               <p className="mt-1 text-sm text-slate-800">{hit.text}</p>

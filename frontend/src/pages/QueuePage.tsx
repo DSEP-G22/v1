@@ -189,14 +189,14 @@ export function QueuePage() {
                 </td>
                 <td className="px-3 py-2">
                   {row.customer_name}
-                  <div className="text-xs text-slate-500">{row.channel ?? "—"}</div>
+                  <div className="text-xs text-slate-500">{row.channel ?? ","}</div>
                 </td>
                 <td className="px-3 py-2">
                   <ModalityIcons modalities={row.modalities} />
                 </td>
-                <td className="px-3 py-2">{row.department ?? "—"}</td>
+                <td className="px-3 py-2">{row.department ?? ","}</td>
                 <td className="px-3 py-2 max-w-[16rem] truncate" title={row.fault ?? ""}>
-                  {row.fault ?? "—"}
+                  {row.fault ?? ","}
                 </td>
                 <td className="px-3 py-2">
                   <SlaCountdown dueAt={row.sla_due_at} />

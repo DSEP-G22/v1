@@ -1,5 +1,5 @@
 """Text normalisation, language detection, and PII scanning for the customer's original text.
-No table ownership — this is a stateless transform between tickets.text.work and
+No table ownership, this is a stateless transform between tickets.text.work and
 tickets.text.done; the normalised text and flags flow through the event body."""
 
 from __future__ import annotations

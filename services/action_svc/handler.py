@@ -1,5 +1,5 @@
 """Re-validates an action recommendation against the current action registry (never trusts the
-recommendation blindly — the registry may have changed since response_svc proposed it), then
+recommendation blindly, the registry may have changed since response_svc proposed it), then
 executes it idempotently keyed by (ticket_id, action_id, sha256(params)). Only this package may
 import ActionAdapterPort (SAD Figure 14)."""
 

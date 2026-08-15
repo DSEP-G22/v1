@@ -1,4 +1,4 @@
-"""In-memory graph loaded from config/seed/graph_seed.yaml — SAD deviation table substitute for
+"""In-memory graph loaded from config/seed/graph_seed.yaml, SAD deviation table substitute for
 Neo4j (~200 nodes in the demo)."""
 
 from __future__ import annotations

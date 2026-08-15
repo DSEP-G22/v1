@@ -1,4 +1,4 @@
-"""UnifiedTicketPayload — the fused, multimodal artefact per SRS Appendix B.5."""
+"""UnifiedTicketPayload, the fused, multimodal artefact per SRS Appendix B.5."""
 
 from __future__ import annotations
 

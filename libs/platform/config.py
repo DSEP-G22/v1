@@ -1,7 +1,7 @@
 """Application settings. Single source of truth for every *_impl selection and threshold.
 
 APP_PROFILE (`stub | cpu | full`) selects a block from `config/settings.yaml`; the `stub`
-profile additionally forces every `*_impl` field to a stub regardless of what YAML/env say —
+profile additionally forces every `*_impl` field to a stub regardless of what YAML/env say,
 this is the CI profile of SAD §8.2.3.
 """
 
@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     auth_token_admin: str = "dev-admin-token"
 
     # Origins allowed to call this API from a browser. The frontend is deployed separately, so
-    # its origin must be listed here explicitly — never "*", because the API accepts credentials.
+    # its origin must be listed here explicitly, never "*", because the API accepts credentials.
     # Defaults cover the Vite dev server and a local `vite preview`.
     # 5300 is the dev server port (see frontend/vite.config.ts for why it is not Vite's 5173),
     # 4173 is `vite preview`.

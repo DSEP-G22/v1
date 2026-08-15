@@ -1,4 +1,4 @@
-"""Draft-response compliance checks — regex-based, pure function."""
+"""Draft-response compliance checks, regex-based, pure function."""
 
 from __future__ import annotations
 

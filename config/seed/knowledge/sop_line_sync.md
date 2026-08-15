@@ -7,7 +7,7 @@
 
 ## Diagnosis
 1. An amber, non-blinking internet LED for more than 5 minutes after boot indicates the modem
-   is failing to synchronise with the exchange/OLT — treat as a line synchronisation fault, not
+   is failing to synchronise with the exchange/OLT, treat as a line synchronisation fault, not
    a router fault.
 2. An internet LED that stays fully off usually means no WAN link is detected at all: check
    physical cabling before opening a line ticket.

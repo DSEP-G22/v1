@@ -1,4 +1,4 @@
-"""Builds `fused_text` and exact-offset `Provenance` spans. The only place fused text is built —
+"""Builds `fused_text` and exact-offset `Provenance` spans. The only place fused text is built,
 callers must not reconstruct or re-derive it by any other path (SAD §5.2.1)."""
 
 from __future__ import annotations

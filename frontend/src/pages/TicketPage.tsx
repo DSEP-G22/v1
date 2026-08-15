@@ -26,7 +26,7 @@ export function TicketPage() {
   useEffect(() => {
     if (!ticketId) return;
     lock.mutate(undefined, {
-      onError: () => toasts.push("This ticket is locked by another agent — opened read-only.", "info"),
+      onError: () => toasts.push("This ticket is locked by another agent, opened read-only.", "info"),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId]);
@@ -53,14 +53,14 @@ export function TicketPage() {
           <h1 className="font-mono text-sm font-semibold">{ticket.ticket_id}</h1>
           <p className="text-xs text-slate-600">
             {ticket.customer?.name ?? "unknown customer"}
-            {ticket.customer?.segment ? ` · ${ticket.customer.segment}` : ""} · {ticket.channel ?? "—"} ·{" "}
-            {ticket.created_at ? new Date(ticket.created_at).toLocaleString() : "—"}
+            {ticket.customer?.segment ? ` · ${ticket.customer.segment}` : ""} · {ticket.channel ?? ","} ·{" "}
+            {ticket.created_at ? new Date(ticket.created_at).toLocaleString() : ","}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {ticket.payload?.partial ? (
             <span className="rounded border border-amber-400 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900">
-              Partial payload — a modality is missing
+              Partial payload, a modality is missing
             </span>
           ) : null}
           <PriorityBadge band={ticket.priority_band} score={ticket.priority_score} />
@@ -84,7 +84,7 @@ export function TicketPage() {
             {ticket.decisions.map((decision) => (
               <li key={decision.id} className="flex flex-wrap gap-3 text-slate-700">
                 <span className="font-mono text-xs text-slate-500">
-                  {decision.at ? new Date(decision.at).toLocaleString() : "—"}
+                  {decision.at ? new Date(decision.at).toLocaleString() : ","}
                 </span>
                 <span className="font-medium">{decision.type}</span>
                 {decision.reason_code ? <span className="text-xs text-slate-500">{decision.reason_code}</span> : null}

@@ -1,4 +1,4 @@
-"""SQLAlchemy 2 declarative ORM — SAD §9.2 minimum table set for v1."""
+"""SQLAlchemy 2 declarative ORM, SAD §9.2 minimum table set for v1."""
 
 from __future__ import annotations
 

@@ -10,7 +10,7 @@ _HASH_DIM = 384
 
 
 class HashEmbedder:
-    """Deterministic hashing vectorizer, no model download — used in CI (`embedder_impl=hash_stub`)."""
+    """Deterministic hashing vectorizer, no model download, used in CI (`embedder_impl=hash_stub`)."""
 
     model_version = "hash-embedder-384"
 

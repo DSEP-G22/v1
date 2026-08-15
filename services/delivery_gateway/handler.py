@@ -1,4 +1,4 @@
-"""REQ-BR-1, REQ-SAFE-1 — the only egress path. Refuses to send without a persisted
+"""REQ-BR-1, REQ-SAFE-1, the only egress path. Refuses to send without a persisted
 `agent_decision.id`; only this package may import MailGatewayPort (SAD Figure 14)."""
 
 from __future__ import annotations

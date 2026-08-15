@@ -1,4 +1,4 @@
-# Seed for libs/platform/graph/inmemory.py — labels per SAD Figure 16:
+# Seed for libs/platform/graph/inmemory.py, labels per SAD Figure 16:
 #   LedState -EVIDENCE_FOR-> Symptom -INDICATES-> Fault -RESOLVED_BY-> Procedure -DEFINED_IN-> Document
 #   Fault -PERMITS-> Action
 #   Fault -ESCALATES_TO-> ResolverQueue

@@ -1,4 +1,4 @@
-"""REQ-CLS-*, REQ-PRI-* — classifies department, scores priority, writes triage_result."""
+"""REQ-CLS-*, REQ-PRI-*, classifies department, scores priority, writes triage_result."""
 
 from __future__ import annotations
 

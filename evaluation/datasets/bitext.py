@@ -15,5 +15,5 @@ def load_split(split: str) -> pd.DataFrame:
         raise ValueError(f"unknown split {split!r}; expected train/val/test")
     path = _PROCESSED_DIR / f"{split}.csv"
     if not path.exists():
-        raise FileNotFoundError(f"{path} not found — run notebooks/01_data_preparation.ipynb first")
+        raise FileNotFoundError(f"{path} not found, run notebooks/01_data_preparation.ipynb first")
     return pd.read_csv(path)

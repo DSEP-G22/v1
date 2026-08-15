@@ -1,7 +1,7 @@
 """Loads the Roboflow "router detection" COCO dataset (`data/router detection.v38-data_video.coco.zip`).
 
 Actual dataset content (verified by inspection, not assumed from the name): this is a
-cable/port/connector detection dataset — categories are `{fiber,lan,phone,power,usb} x
+cable/port/connector detection dataset, categories are `{fiber,lan,phone,power,usb} x
 {cable,conn}` plus a bare `phone`/`power`/`usb` port class, 2137 images / 4630 boxes in the train
 split. It is **not** an LED-colour-state dataset. See `notebooks/05_vlm_led_extraction.ipynb` for
 how this is actually used (as a port/cable-presence structured hint) versus the separate,

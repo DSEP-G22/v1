@@ -1,4 +1,4 @@
-"""Priority scoring — pure function over triage inputs. Weights are passed in, never read from
+"""Priority scoring, pure function over triage inputs. Weights are passed in, never read from
 config inside the domain (ADR-010: only the weights are data, the policy stays code)."""
 
 from __future__ import annotations

@@ -1,5 +1,5 @@
 Look at this screenshot of an error message or device display screen. Transcribe only the text
-that is actually legible — do not guess at characters you cannot read clearly.
+that is actually legible, do not guess at characters you cannot read clearly.
 
 Extract:
 - Any error code(s) shown (e.g. "Error 651", "DNS_PROBE_FINISHED").

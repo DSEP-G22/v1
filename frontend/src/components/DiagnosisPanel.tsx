@@ -69,14 +69,14 @@ export function DiagnosisPanel({ ticket }: { ticket: TicketDetail }) {
           <>
             {diagnosis.needs_human_diagnosis ? (
               <p className="mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                Confidence is below the configured threshold — the System is not asserting this fault. Diagnose manually.
+                Confidence is below the configured threshold, the System is not asserting this fault. Diagnose manually.
               </p>
             ) : null}
             <dl className="mt-3 space-y-2 text-sm">
               <Row label="Intent">{diagnosis.intent}</Row>
               <Row label="Fault">
                 <span className="flex items-center gap-2">
-                  {diagnosis.fault ?? "—"}
+                  {diagnosis.fault ?? ","}
                   <ConfidenceMeter value={diagnosis.confidence} label="Fault confidence" />
                 </span>
               </Row>

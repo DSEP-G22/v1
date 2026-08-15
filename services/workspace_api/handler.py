@@ -226,7 +226,7 @@ def get_ticket_detail(engine: Engine, ticket_id: str) -> dict:
 
 def _chunk_excerpt(session, chunk_id: str, limit: int = 400) -> str | None:
     """UI-3 requires each citation to expand to its source excerpt. Returns None rather than
-    raising when the chunk has been superseded — an unresolvable citation is a display concern,
+    raising when the chunk has been superseded, an unresolvable citation is a display concern,
     not an error."""
     chunk = KnowledgeChunkRepo(session).get(chunk_id)
     if chunk is None:

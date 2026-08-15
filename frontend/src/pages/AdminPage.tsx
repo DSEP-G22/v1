@@ -80,7 +80,7 @@ function UsersPanel() {
             <tr key={user.id} className="border-t border-slate-200">
               <td className="px-3 py-2">{user.username}</td>
               <td className="px-3 py-2">{user.role}</td>
-              <td className="px-3 py-2 text-slate-600">{user.email ?? "—"}</td>
+              <td className="px-3 py-2 text-slate-600">{user.email ?? ","}</td>
             </tr>
           ))}
         </tbody>
@@ -95,7 +95,7 @@ function RoutingPanel() {
   return (
     <div className="card p-4">
       <p className="text-xs text-slate-500">
-        Read-only in v1 — rules are stored in <code className="font-mono">config/routing_rules.yaml</code> and applied at
+        Read-only in v1, rules are stored in <code className="font-mono">config/routing_rules.yaml</code> and applied at
         service start-up.
       </p>
       <pre className="mt-3 max-h-96 overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">
@@ -111,7 +111,7 @@ function ThresholdsPanel() {
   return (
     <div className="card p-4">
       <p className="text-xs text-slate-500">
-        Read-only in v1 — change these in <code className="font-mono">.env</code> and restart the process.
+        Read-only in v1, change these in <code className="font-mono">.env</code> and restart the process.
       </p>
       <dl className="mt-3 grid gap-3 sm:grid-cols-2">
         {Object.entries(data ?? {}).map(([key, value]) => (
@@ -174,7 +174,7 @@ function ActionRegistryPanel() {
                 <p className="text-xs text-slate-500">{entry.description}</p>
               </td>
               <td className="px-3 py-2">{entry.department}</td>
-              <td className="px-3 py-2 text-xs">{entry.mapped_faults.join(", ") || "—"}</td>
+              <td className="px-3 py-2 text-xs">{entry.mapped_faults.join(", ") || ","}</td>
               <td className="px-3 py-2">{entry.requires_supervisor ? "Required" : "No"}</td>
               <td className="px-3 py-2">{entry.enabled ? "Yes" : "Disabled"}</td>
             </tr>
