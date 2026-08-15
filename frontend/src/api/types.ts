@@ -201,3 +201,34 @@ export interface DlqEntry {
   attempts: number;
   created_at: string;
 }
+
+export interface RetrainRun {
+  id: string;
+  task: string;
+  status: string;
+  trigger: string;
+  examples_new: number;
+  examples_total: number;
+  baseline_metric: number | null;
+  candidate_metric: number | null;
+  metric_name: string;
+  promoted: boolean;
+  mlflow_run_id: string | null;
+  started_at: string;
+  finished_at: string | null;
+  notes: string | null;
+}
+
+export interface LearningStatus {
+  pending_examples: Record<string, number>;
+  retrain_threshold: number;
+  retrain_due: boolean;
+  spark_master: string;
+  registry: {
+    tracking_uri: string;
+    reachable: boolean;
+    models: Record<string, { uri: string; version?: string; run_id?: string; metrics?: Record<string, number>; error?: string }>;
+    error?: string;
+  };
+  recent_runs: RetrainRun[];
+}

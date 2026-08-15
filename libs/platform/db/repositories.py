@@ -28,11 +28,15 @@ Table owners:
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from libs.platform.db.models import (
+    RetrainRunRow,
+    TrainingExampleRow,
     ActionExecutionRow,
     ActionRecommendationRow,
     ActionRegistryEntryRow,
@@ -563,3 +567,67 @@ class DlqEntryRepo:
             from datetime import datetime, timezone
 
             row.replayed_at = datetime.now(timezone.utc)
+
+
+class TrainingExampleRepo:
+    """Append-only store of human-confirmed labels (the continuous-learning substrate)."""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, **kwargs) -> TrainingExampleRow | None:
+        """Idempotent on (decision_id, task): replaying a decision event cannot duplicate a label."""
+        stmt = sqlite_insert(TrainingExampleRow).values(**kwargs)
+        stmt = stmt.on_conflict_do_nothing(index_elements=["decision_id", "task"])
+        self._session.execute(stmt)
+        self._session.flush()
+        return self._session.execute(
+            select(TrainingExampleRow).where(
+                TrainingExampleRow.decision_id == kwargs["decision_id"],
+                TrainingExampleRow.task == kwargs["task"],
+            )
+        ).scalar_one_or_none()
+
+    def list_for_task(self, task: str, only_unconsumed: bool = False) -> list[TrainingExampleRow]:
+        stmt = select(TrainingExampleRow).where(TrainingExampleRow.task == task)
+        if only_unconsumed:
+            stmt = stmt.where(TrainingExampleRow.consumed_by_run.is_(None))
+        return list(self._session.execute(stmt.order_by(TrainingExampleRow.created_at)).scalars())
+
+    def count_unconsumed(self, task: str) -> int:
+        return len(self.list_for_task(task, only_unconsumed=True))
+
+    def mark_consumed(self, ids: list[str], run_id: str) -> None:
+        for example_id in ids:
+            row = self._session.get(TrainingExampleRow, example_id)
+            if row is not None:
+                row.consumed_by_run = run_id
+
+
+class RetrainRunRepo:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def create(self, **kwargs) -> RetrainRunRow:
+        row = RetrainRunRow(**kwargs)
+        self._session.add(row)
+        self._session.flush()
+        return row
+
+    def get(self, run_id: str) -> RetrainRunRow | None:
+        return self._session.get(RetrainRunRow, run_id)
+
+    def finish(self, run_id: str, **fields) -> None:
+        row = self._session.get(RetrainRunRow, run_id)
+        if row is None:
+            return
+        for key, value in fields.items():
+            setattr(row, key, value)
+        row.finished_at = datetime.now(timezone.utc)
+
+    def list_recent(self, limit: int = 20) -> list[RetrainRunRow]:
+        return list(
+            self._session.execute(
+                select(RetrainRunRow).order_by(RetrainRunRow.started_at.desc()).limit(limit)
+            ).scalars()
+        )

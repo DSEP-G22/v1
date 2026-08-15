@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { useActionRegistry, useDlq, useModels, useReplayDlq, useRoutingRules, useThresholds, useUsers } from "../api/hooks";
 import { ErrorPanel } from "../components/ErrorPanel";
+import { LearningPanel } from "../components/LearningPanel";
 import { useToasts } from "../components/Toasts";
 
 // UI-5. User and role management, the routing-rule and threshold view, model version selection,
@@ -12,13 +13,14 @@ import { useToasts } from "../components/Toasts";
 // implemented in v1 (see docs/09-operations.md). Showing them read-only is honest; offering an
 // editor that silently required a restart would not be.
 
-type Tab = "users" | "routing" | "thresholds" | "models" | "actions" | "dlq";
+type Tab = "users" | "routing" | "thresholds" | "models" | "learning" | "actions" | "dlq";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "users", label: "Users" },
   { id: "routing", label: "Routing rules" },
   { id: "thresholds", label: "Thresholds" },
   { id: "models", label: "Models" },
+  { id: "learning", label: "Learning" },
   { id: "actions", label: "Action registry" },
   { id: "dlq", label: "Dead-letter queue" },
 ];
@@ -53,6 +55,7 @@ export function AdminPage() {
         {tab === "routing" ? <RoutingPanel /> : null}
         {tab === "thresholds" ? <ThresholdsPanel /> : null}
         {tab === "models" ? <ModelsPanel /> : null}
+        {tab === "learning" ? <LearningPanel /> : null}
         {tab === "actions" ? <ActionRegistryPanel /> : null}
         {tab === "dlq" ? <DlqPanel /> : null}
       </div>

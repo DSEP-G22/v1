@@ -65,6 +65,17 @@ class Settings(BaseSettings):
     # Defaults cover the Vite dev server and a local `vite preview`.
     # 5300 is the dev server port (see frontend/vite.config.ts for why it is not Vite's 5173),
     # 4173 is `vite preview`.
+    # MLflow is the source of truth for trained artefacts. The runtime reads the @champion alias;
+    # if the server is unreachable the resolver falls back to the local artefact (see
+    # libs/platform/mlflow_registry.py), so this never has to be reachable for the system to run.
+    mlflow_tracking_uri: str = "http://127.0.0.1:5000"
+    mlflow_enabled: bool = True
+    mlflow_department_model: str = "models:/cst-department-classifier@champion"
+
+    # Continuous learning: a retrain is offered once this many unconsumed human labels exist.
+    retrain_min_new_examples: int = 25
+    spark_master: str = "local[*]"
+
     cors_allow_origins: list[str] = [
         "http://localhost:5300",
         "http://127.0.0.1:5300",

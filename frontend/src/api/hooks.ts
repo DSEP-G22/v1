@@ -9,6 +9,7 @@ import type {
   DlqEntry,
   KnowledgeDocument,
   KnowledgeHit,
+  LearningStatus,
   QueueRow,
   TicketDetail,
 } from "./types";
@@ -166,6 +167,13 @@ export const useUsers = () =>
   useQuery({
     queryKey: queryKeys.users,
     queryFn: () => api.get<{ id: string; username: string; role: string; email: string | null }[]>("/admin/users"),
+  });
+
+export const useLearning = () =>
+  useQuery({
+    queryKey: ["learning"],
+    queryFn: () => api.get<LearningStatus>("/admin/learning"),
+    refetchInterval: 20_000,
   });
 
 export const useDlq = () => useQuery({ queryKey: queryKeys.dlq, queryFn: () => api.get<DlqEntry[]>("/admin/dlq") });

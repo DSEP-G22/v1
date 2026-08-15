@@ -1,0 +1,11 @@
+{
+  "run_id": "01M03VQCZYY9YQ5W95HZ99B39Y",
+  "task": "department",
+  "examples_new": 4,
+  "mlflow_run_id": "812360fd07994be092e1df24bc8d584b",
+  "baseline_metric": 0.9982434987591997,
+  "candidate_metric": 0.9982434987591997,
+  "promoted": false,
+  "macro_f1": 0.9982434987591997,
+  "accuracy": 0.9981678270428729
+}

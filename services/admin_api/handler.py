@@ -203,6 +203,47 @@ def search_knowledge(ports: Ports, query: str, k: int = 5) -> list[dict]:
     ]
 
 
+def learning_status(engine: Engine, settings: Settings) -> dict:
+    """Continuous-learning state for the admin console: how many human labels are waiting, what
+    the registry holds, and what recent retrains did."""
+    from libs.platform.db.repositories import RetrainRunRepo
+    from libs.platform.mlflow_registry import registry_status
+    from services.feedback_svc.handler import pending_counts
+
+    pending = pending_counts(engine)
+    with session_scope(engine) as session:
+        runs = [
+            {
+                "id": r.id,
+                "task": r.task,
+                "status": r.status,
+                "trigger": r.trigger,
+                "examples_new": r.examples_new,
+                "examples_total": r.examples_total,
+                "baseline_metric": r.baseline_metric,
+                "candidate_metric": r.candidate_metric,
+                "metric_name": r.metric_name,
+                "promoted": r.promoted,
+                "mlflow_run_id": r.mlflow_run_id,
+                "started_at": r.started_at.isoformat(),
+                "finished_at": r.finished_at.isoformat() if r.finished_at else None,
+                "notes": r.notes,
+            }
+            for r in RetrainRunRepo(session).list_recent()
+        ]
+
+    return {
+        "pending_examples": pending,
+        "retrain_threshold": settings.retrain_min_new_examples,
+        "retrain_due": pending.get("department", 0) >= settings.retrain_min_new_examples,
+        "spark_master": settings.spark_master,
+        "registry": registry_status(
+            settings.mlflow_tracking_uri, {"department": settings.mlflow_department_model}
+        ),
+        "recent_runs": runs,
+    }
+
+
 def health() -> dict:
     return {"status": "ok"}
 

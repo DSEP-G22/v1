@@ -39,7 +39,12 @@ def _imported_names(py_file: Path) -> list[str]:
 # a request/response operation whose per-document report the administrator must see immediately.
 # It still owns knowledge_document/knowledge_chunk exclusively, test_single_writer.py enforces
 # that, so importing it does not grant anyone else write access to those tables.
-_LIBRARY_SERVICES = {"retrieval_svc", "knowledge_ingest"}
+# Packages under services/ that are libraries rather than broker consumers: they subscribe to no
+# topic, own their tables exclusively, and are called synchronously by whoever needs them.
+# feedback_svc harvests a training example in the same transaction boundary as the decision that
+# produced it, deliberately: routing it through a topic would mean a dropped event silently costs
+# a training label, and the label is the whole point of the continuous-learning loop.
+_LIBRARY_SERVICES = {"retrieval_svc", "knowledge_ingest", "feedback_svc"}
 
 # workspace_api is the one place a human agent acts, and REQ-WKS explicitly requires it to
 # trigger delivery (approve) and action execution (execute) synchronously and to keep the queue

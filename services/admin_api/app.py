@@ -19,6 +19,7 @@ from services.admin_api.handler import (
     list_action_registry,
     list_dlq,
     list_knowledge_documents,
+    learning_status,
     list_users,
     put_routing_rules,
     replay_dlq_entry,
@@ -117,6 +118,11 @@ def build_app(ports: Ports, engine: Engine, settings: Settings) -> FastAPI:
     @app.get("/knowledge/search")
     def get_knowledge_search(q: str, k: int = 5, user: CurrentUser = Depends(get_current_user)) -> list[dict]:
         return search_knowledge(ports, q, k=k)
+
+    @app.get("/learning")
+    def get_learning(user: CurrentUser = Depends(get_current_user)) -> dict:
+        """UI-5: pending human labels, registry champion, and retraining history."""
+        return learning_status(engine, settings)
 
     @app.get("/dlq")
     def get_dlq(user: CurrentUser = Depends(require_admin)) -> list[dict]:

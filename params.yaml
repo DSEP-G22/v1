@@ -1,0 +1,20 @@
+# Tracked by DVC: changing any value here marks the dependent stages stale, so an experiment
+# is always attributable to the parameters that produced it.
+
+prepare:
+  test_size: 0.1
+  val_size: 0.1
+  random_seed: 42
+  strip_template_slots: true      # Bitext contains {{Order Number}} placeholders
+
+retrain:
+  min_new_examples: 1             # raise for production; 1 keeps the demo loop responsive
+  num_features: 65536             # HashingTF dimensionality
+  correction_weight: 3.0          # human corrections outweigh confirmations
+  reg_param: 0.02
+  max_iter: 40
+  promote_metric: macro_f1
+
+evaluate:
+  tickets: 100
+  profile: stub

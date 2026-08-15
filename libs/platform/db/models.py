@@ -256,6 +256,77 @@ class AgentDecisionRow(Base):
     after: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
+class TrainingExampleRow(Base):
+    """One human-confirmed label, harvested from an agent decision.
+
+    This is the substrate of the continuous-learning loop. Every row records what the model
+    predicted, what the human decided it should have been, and which artefact version produced
+    the prediction, so a retrain can be traced back to the exact interactions that justified it.
+
+    Rows are append-only and immutable. `consumed_by_run` is stamped when a training run reads
+    the row, so a given example is never silently counted twice across retrains, and a run can
+    be reproduced by selecting exactly the rows it consumed.
+    """
+
+    __tablename__ = "training_example"
+    __table_args__ = (
+        UniqueConstraint("decision_id", "task", name="ux_training_example_decision_task"),
+        Index("ix_training_example_unconsumed", "task", "consumed_by_run"),
+    )
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_ulid)
+    ticket_id: Mapped[str] = mapped_column(ForeignKey("ticket.id"), nullable=False)
+    decision_id: Mapped[str] = mapped_column(ForeignKey("agent_decision.id"), nullable=False)
+
+    # Which model this example trains: department | priority | draft | fault
+    task: Mapped[str] = mapped_column(String, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+
+    predicted: Mapped[str | None] = mapped_column(String, nullable=True)
+    corrected: Mapped[str] = mapped_column(String, nullable=False)
+    model_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    model_version: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    # False when the human agreed with the model. Agreements are still recorded: a retrain that
+    # only ever sees corrections learns a badly skewed view of the input distribution.
+    is_correction: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    actor_id: Mapped[str] = mapped_column(ForeignKey("app_user.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    consumed_by_run: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class RetrainRunRow(Base):
+    """One execution of the retraining pipeline, successful or not.
+
+    Kept in the operational database rather than only in MLflow so the admin console can show
+    retraining history without depending on the tracking server being reachable.
+    """
+
+    __tablename__ = "retrain_run"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_ulid)
+    task: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False, default="RUNNING")
+    trigger: Mapped[str] = mapped_column(String, nullable=False)  # manual | scheduled | threshold
+
+    examples_total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    examples_new: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    baseline_metric: Mapped[float | None] = mapped_column(Float, nullable=True)
+    candidate_metric: Mapped[float | None] = mapped_column(Float, nullable=True)
+    metric_name: Mapped[str] = mapped_column(String, nullable=False, default="macro_f1")
+    promoted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    mlflow_run_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    model_version: Mapped[str | None] = mapped_column(String, nullable=True)
+    dvc_data_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class DeliveryRow(Base):
     __tablename__ = "delivery"
 

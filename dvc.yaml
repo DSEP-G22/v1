@@ -1,0 +1,55 @@
+# DVC pipeline for the continuous-learning loop.
+#
+# Each stage declares its dependencies and outputs, so `dvc repro` reruns only what is stale.
+# The point in this project is reproducibility rather than scale: given the same data hash and
+# the same parameters, a retrain produces the same model, and `dvc.lock` records which data
+# version produced which artefact.
+#
+#   dvc repro                 run everything that is out of date
+#   dvc repro retrain         retrain only
+#   dvc dag                   show the stage graph
+#   dvc metrics show          current metrics
+#   dvc metrics diff          metrics against the previous commit
+
+stages:
+  prepare:
+    desc: Build train/val/test splits from Bitext plus the telecom supplement.
+    cmd: python mlops/prepare_data.py
+    deps:
+      - mlops/prepare_data.py
+      - data/raw/Bitext_Sample_Customer_Support_Training_Dataset_27K_responses-v11.csv
+      - data/telecom_supplement.csv
+      - config/department_map.yaml
+    params:
+      - prepare.test_size
+      - prepare.val_size
+      - prepare.random_seed
+    outs:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
+
+  retrain:
+    desc: Spark retraining over the base corpus plus human-confirmed labels; promotes on win.
+    cmd: python -m mlops.spark_retrain --task department --trigger scheduled --promote
+    deps:
+      - mlops/spark_retrain.py
+      - data/processed/train.csv
+      - data/processed/test.csv
+    params:
+      - retrain.min_new_examples
+      - retrain.num_features
+      - retrain.correction_weight
+    metrics:
+      - evaluation/reports/retrain_last.json:
+          cache: false
+
+  evaluate:
+    desc: End-to-end pipeline evaluation over synthetic multimodal tickets.
+    cmd: python -m evaluation.harness.run --tickets 100 --profile stub
+    deps:
+      - evaluation/harness/run.py
+      - evaluation/datasets/synthetic.py
+    metrics:
+      - evaluation/reports/e2e_report.json:
+          cache: false

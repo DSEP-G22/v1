@@ -1,0 +1,141 @@
+# Cluster-ready stack for the multimodal support triage system.
+#
+# Profiles keep the footprint honest, because starting everything is rarely what you want:
+#
+#   docker compose --profile app up            API + UI only, stub models, no cluster
+#   docker compose --profile mlops up          MLflow + Spark master + 2 workers
+#   docker compose --profile full up           everything, including Kafka and Postgres
+#
+# The Spark services are a real standalone cluster, not a local[*] shim: mlops/spark_retrain.py
+# is submitted to spark://spark-master:7077 and the workers execute it. The same script runs
+# unchanged on local[*] when no cluster is up, which is what makes the retraining path testable
+# without Docker.
+
+name: cst-v1
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    profiles: ["app", "full"]
+    ports:
+      - "8000:8000"
+    environment:
+      APP_PROFILE: ${APP_PROFILE:-stub}
+      DATABASE_URL: ${DATABASE_URL:-sqlite+pysqlite:///./v1_data/app.db}
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      CORS_ALLOW_ORIGINS: '["http://localhost:5300","http://localhost:8080"]'
+    volumes:
+      - ./v1_data:/app/v1_data
+      - ./models/artifacts:/app/models/artifacts
+    extra_hosts:
+      # Ollama runs on the host, not in a container, because it needs the host GPU.
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/admin/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  ui:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.ui
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8000}
+    profiles: ["app", "full"]
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.16.2
+    profiles: ["mlops", "full"]
+    ports:
+      - "5000:5000"
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts
+      --serve-artifacts
+    volumes:
+      - mlflow-data:/mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  spark-master:
+    image: bitnami/spark:3.5
+    profiles: ["mlops", "full"]
+    environment:
+      SPARK_MODE: master
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+    ports:
+      - "7077:7077"   # cluster submit endpoint
+      - "8090:8080"   # master web UI (8080 is taken by the frontend)
+    volumes:
+      - ./:/opt/project:ro
+
+  spark-worker:
+    image: bitnami/spark:3.5
+    profiles: ["mlops", "full"]
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: ${SPARK_WORKER_MEMORY:-2G}
+      SPARK_WORKER_CORES: ${SPARK_WORKER_CORES:-2}
+    deploy:
+      replicas: 2
+    volumes:
+      - ./:/opt/project:ro
+
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["full"]
+    environment:
+      POSTGRES_USER: cst
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cst_dev_password}
+      POSTGRES_DB: cst
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cst"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: bitnami/kafka:3.7
+    profiles: ["full"]
+    environment:
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/bitnami/kafka
+
+volumes:
+  mlflow-data:
+  pg-data:
+  kafka-data:

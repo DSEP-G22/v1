@@ -42,6 +42,23 @@ class Conflict(ValueError):
     pass
 
 
+def _harvest(engine: Engine, decision_id: str) -> None:
+    """Turn a recorded decision into training labels.
+
+    Wrapped so a failure in the learning loop can never fail the agent's action: the decision
+    and the delivery are already committed by this point, and losing one training example
+    matters far less than a 500 on Approve and Send.
+    """
+    try:
+        from services.feedback_svc.handler import harvest_decision
+
+        harvest_decision(engine, decision_id)
+    except Exception:  # noqa: BLE001 - deliberately broad, see docstring
+        import logging
+
+        logging.getLogger(__name__).exception("training-example harvest failed", extra={"stage": "feedback"})
+
+
 def _iso(value: Any) -> str | None:
     return value.isoformat() if value is not None else None
 
@@ -319,6 +336,7 @@ def approve_and_send(ports: Ports, engine: Engine, settings: Settings, *, ticket
     from services.projector_svc.handler import sync_state
 
     sync_state(engine, ticket_id)
+    _harvest(engine, approval_id)
     return {"approval_id": approval_id, **result}
 
 
@@ -339,6 +357,7 @@ def reject_draft(engine: Engine, ticket_id: str, actor_id: str, reason_code: str
     from services.projector_svc.handler import sync_state
 
     sync_state(engine, ticket_id)
+    _harvest(engine, decision.id)
     return {"decision_id": decision.id}
 
 
@@ -370,6 +389,7 @@ def reassign_ticket(engine: Engine, ticket_id: str, actor_id: str, department: s
     from services.projector_svc.handler import sync_state
 
     sync_state(engine, ticket_id)
+    _harvest(engine, decision_id)
     return {"decision_id": decision_id, "department": department}
 
 
@@ -397,6 +417,7 @@ def escalate_ticket(engine: Engine, ticket_id: str, actor_id: str, reason_code: 
     from services.projector_svc.handler import sync_state
 
     sync_state(engine, ticket_id)
+    _harvest(engine, decision_id)
     return {"decision_id": decision_id, "priority_band": "critical"}
 
 

@@ -45,6 +45,26 @@ CREATE TABLE outbox (
 	PRIMARY KEY (id)
 );
 
+CREATE TABLE retrain_run (
+	id VARCHAR NOT NULL, 
+	task VARCHAR NOT NULL, 
+	status VARCHAR NOT NULL, 
+	"trigger" VARCHAR NOT NULL, 
+	examples_total INTEGER NOT NULL, 
+	examples_new INTEGER NOT NULL, 
+	baseline_metric FLOAT, 
+	candidate_metric FLOAT, 
+	metric_name VARCHAR NOT NULL, 
+	promoted BOOLEAN NOT NULL, 
+	mlflow_run_id VARCHAR, 
+	model_version VARCHAR, 
+	dvc_data_hash VARCHAR, 
+	notes TEXT, 
+	started_at DATETIME NOT NULL, 
+	finished_at DATETIME, 
+	PRIMARY KEY (id)
+);
+
 CREATE TABLE app_user (
 	id VARCHAR NOT NULL, 
 	org_id VARCHAR NOT NULL, 
@@ -245,24 +265,22 @@ CREATE TABLE queue_projection (
 	department VARCHAR, 
 	priority_band VARCHAR, 
 	state VARCHAR NOT NULL, 
-	customer_name VARCHAR NOT NULL,
-	locked_by VARCHAR,
-	updated_at DATETIME NOT NULL,
-	channel VARCHAR,
-	priority_score INTEGER,
-	department_confidence FLOAT,
-	fault VARCHAR,
-	diagnosis_confidence FLOAT,
-	modalities JSON,
-	flags JSON,
-	ticket_created_at DATETIME,
-	sla_due_at DATETIME,
-	PRIMARY KEY (id),
-	UNIQUE (ticket_id),
+	customer_name VARCHAR NOT NULL, 
+	locked_by VARCHAR, 
+	updated_at DATETIME NOT NULL, 
+	channel VARCHAR, 
+	priority_score INTEGER, 
+	department_confidence FLOAT, 
+	fault VARCHAR, 
+	diagnosis_confidence FLOAT, 
+	modalities JSON NOT NULL, 
+	flags JSON NOT NULL, 
+	ticket_created_at DATETIME, 
+	sla_due_at DATETIME, 
+	PRIMARY KEY (id), 
+	UNIQUE (ticket_id), 
 	FOREIGN KEY(ticket_id) REFERENCES ticket (id)
 );
-
-CREATE INDEX ix_queue_projection_order ON queue_projection (department, priority_band, priority_score DESC, ticket_created_at);
 
 CREATE TABLE ticket_state_transition (
 	id VARCHAR NOT NULL, 
@@ -347,6 +365,27 @@ CREATE TABLE delivery (
 	FOREIGN KEY(ticket_id) REFERENCES ticket (id), 
 	FOREIGN KEY(draft_response_id) REFERENCES draft_response (id), 
 	FOREIGN KEY(approval_id) REFERENCES agent_decision (id)
+);
+
+CREATE TABLE training_example (
+	id VARCHAR NOT NULL, 
+	ticket_id VARCHAR NOT NULL, 
+	decision_id VARCHAR NOT NULL, 
+	task VARCHAR NOT NULL, 
+	text TEXT NOT NULL, 
+	predicted VARCHAR, 
+	corrected VARCHAR NOT NULL, 
+	model_confidence FLOAT, 
+	model_version VARCHAR, 
+	is_correction BOOLEAN NOT NULL, 
+	actor_id VARCHAR NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	consumed_by_run VARCHAR, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ux_training_example_decision_task UNIQUE (decision_id, task), 
+	FOREIGN KEY(ticket_id) REFERENCES ticket (id), 
+	FOREIGN KEY(decision_id) REFERENCES agent_decision (id), 
+	FOREIGN KEY(actor_id) REFERENCES app_user (id)
 );
 
 CREATE TABLE visual_summary (
