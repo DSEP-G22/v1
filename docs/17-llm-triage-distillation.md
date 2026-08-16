@@ -159,13 +159,41 @@ python -m mlops.train_distilled_triage --epochs 3 --register
 
 ## Status
 
-Built and verified: the unified dataset builder (300 payloads, real Whisper transcripts,
-provenance spans checked), the triage port and all four adapters including the rule fallback, the
-`triage_svc` integration, and the schema changes. 42 tests pass with the triage model on the hot
-path.
+Built and verified end to end:
 
-Not yet run end to end: the teacher labelling pass and the student training, because the Ollama
-model download did not complete on this connection (roughly 3.5 MB/s for a 4.9 GB model, competing
-with a second pull). The code paths are written and their failure modes are handled, but the
-accuracy numbers do not exist yet and no claim is made about them. Run steps 2 and 3 above once
-the model is present.
+| Stage | Result |
+|---|---|
+| Unified dataset | 300 payloads, real Whisper transcripts of minds14 telephony, provenance spans verified |
+| Teacher labelling | 300 labelled, 0 rejected, resumable, JSON parser handles fenced and prose-wrapped output |
+| Student training | DistilBERT 66.4M params, 2 epochs on CPU |
+| Student accuracy | department 0.85, band 0.87, sentiment 0.92 on a 60-row held-out split |
+| Student latency | **73 ms per ticket** after warm-up |
+| Serving | loads through `TriageModelPort` in the `cpu` profile; `triage_svc` uses it; 42 tests pass |
+
+**The teacher was a stand-in, not Llama 3.1.** The Ollama model download failed repeatedly on this
+connection: the 8B stalled around 20% at 3.5 MB/s, a 3B retry restarted from zero, and a 0.5B
+attempt died with `net/http: TLS handshake timeout` against the CDN. To keep the pipeline
+verifiable, the labeller was driven by a deterministic keyword teacher through the same
+`call_teacher` seam, so every other component was exercised for real.
+
+What this means for the numbers. The 0.85 department accuracy measures how well the student
+reproduces its teacher, which is the right metric for distillation, but the teacher here was a
+keyword rule, so the figure demonstrates that distillation works mechanically rather than that the
+system triages well. `models/artifacts/distilled_triage/config.json` records
+`teacher_model: "stand-in rule teacher"` so the artefact cannot be mistaken for one distilled from
+an LLM.
+
+To obtain real numbers, once `ollama pull llama3.1:8b-instruct-q4_K_M` completes:
+
+```bash
+rm data/processed/distillation_dataset.jsonl
+python -m mlops.llm_triage_labeller --limit 500
+python -m mlops.train_distilled_triage --epochs 3 --register
+```
+
+Nothing in the code changes. The stand-in existed only in a throwaway test harness, never in
+`mlops/llm_triage_labeller.py` itself.
+
+The 300-row dataset is also small, and 9% multimodal. Both should rise substantially before the
+accuracy figures mean anything: `--limit 2000 --with-audio 40` is a more reasonable starting
+point.
