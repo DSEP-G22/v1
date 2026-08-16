@@ -15,6 +15,40 @@ from pydantic import BaseModel
 _PROMPT_DIR = Path(__file__).resolve().parents[3] / "models" / "prompts" / "llm"
 
 
+# Characters a language model reaches for that the project's written style does not use. Model
+# output is the one text path that cannot be cleaned at authoring time: a customer-facing reply is
+# written at runtime, so the substitution has to happen here, on the way out of the adapter.
+#
+# Safe to apply to a JSON response, which matters because `generate_json` parses exactly this
+# text. No replacement introduces a brace, bracket, colon or comma, so JSON structure cannot
+# change. The quote substitutions only ever produce characters that a JSON encoder escapes inside
+# string values anyway, so a string boundary cannot move. Verified by
+# tests/unit/test_llm_punctuation.py, which round-trips a JSON payload through this function.
+#
+# It is also idempotent: no replacement produces a character that is itself a key here. An earlier
+# em-dash script in this project was not, and re-running it rewrote its own output across the repo.
+_PUNCTUATION_SUBSTITUTIONS = {
+    "—": ", ",  # em dash
+    "–": "-",   # en dash
+    "‘": "'",   # left single quote
+    "’": "'",   # right single quote
+    "“": '"',   # left double quote
+    "”": '"',   # right double quote
+    "…": "...",  # ellipsis
+    "‑": "-",  # non-breaking hyphen, emitted in words like "power-cycle"
+    "‒": "-",  # figure dash
+    "−": "-",  # minus sign
+    " ": " ",   # non-breaking space
+}
+
+
+def _normalise_punctuation(text: str) -> str:
+    """Replace typographic characters a model emits with their plain equivalents."""
+    for source, replacement in _PUNCTUATION_SUBSTITUTIONS.items():
+        text = text.replace(source, replacement)
+    return text
+
+
 class GenerationInvalid(RuntimeError):
     pass
 
@@ -111,7 +145,7 @@ class OllamaGenerator:
                     resp.raise_for_status()
                     content = resp.json()["message"]["content"]
                     self._breaker.record_success()
-                    return content
+                    return _normalise_punctuation(content)
                 except Exception as exc:  # noqa: BLE001
                     last_exc = exc
                     self._breaker.record_failure()

@@ -23,7 +23,14 @@ profiles:
     # rows to make that comparison meaningful (see docs/17-llm-triage-distillation.md).
     triage_model_impl: embedding
 
+    # Response generation is a real LLM call. The default llama3.1:8b-instruct-q4_K_M was never
+    # successfully pulled on this machine, and OllamaGenerator degrades quietly to a templated
+    # reply when its model is missing, so the pipeline would have looked healthy while generating
+    # nothing model-written. A cloud model needs no pull and uses the same endpoint.
+    llm_model: gpt-oss:120b-cloud
+
   # Full stack: Kafka, Postgres, and the same real models as the cpu profile.
   full:
     triage_model_impl: embedding
+    llm_model: gpt-oss:120b-cloud
     broker: kafka
