@@ -242,6 +242,12 @@ Run end to end on real data with a real teacher.
 | Teacher labelling | **1,198 labelled by `gpt-oss:120b-cloud`**, 2 failed, p50 6.06 s p95 9.29 s per ticket |
 | Split | 958 train / 240 test, shared by both students |
 
+Both failures were truncated JSON: the teacher stopped mid-object while emitting a long
+`rationale`, so the response was valid as far as it went but had no closing brace. That is an
+output-length limit rather than a parser weakness, and dropping the two rows is the right
+response, since a half-written judgement has no department to train on. Raising the teacher's
+output cap would recover them if the loss ever mattered; at 2 rows in 1,179 it does not.
+
 The teacher's own latency is the argument for distilling: 6 seconds per ticket is most of the
 SRS budget for the entire pipeline, spent on triage alone.
 
