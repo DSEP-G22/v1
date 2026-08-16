@@ -17,6 +17,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 _CONFIG_DIR = Path(__file__).resolve().parents[2] / "config"
 _STUB_IMPL_FIELDS = {
     "asr_impl": "stub",
+    "triage_model_impl": "stub",
     "vlm_impl": "stub",
     "llm_impl": "stub",
     "embedder_impl": "hash_stub",
@@ -60,11 +61,17 @@ class Settings(BaseSettings):
     auth_token_lead: str = "dev-lead-token"
     auth_token_admin: str = "dev-admin-token"
 
+    # Triage model: none uses the classifier, llm calls the teacher through Ollama, distilled
+    # runs the student trained on the teacher's labels, stub is for CI.
+    triage_model_impl: str = "none"  # none | llm | distilled | stub
+    distilled_triage_path: Path = Path("./models/artifacts/distilled_triage")
+
     # Origins allowed to call this API from a browser. The frontend is deployed separately, so
     # its origin must be listed here explicitly, never "*", because the API accepts credentials.
     # Defaults cover the Vite dev server and a local `vite preview`.
     # 5300 is the dev server port (see frontend/vite.config.ts for why it is not Vite's 5173),
     # 4173 is `vite preview`.
+
     # MLflow is the source of truth for trained artefacts. The runtime reads the @champion alias;
     # if the server is unreachable the resolver falls back to the local artefact (see
     # libs/platform/mlflow_registry.py), so this never has to be reachable for the system to run.

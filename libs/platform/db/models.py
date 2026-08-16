@@ -173,6 +173,10 @@ class TriageResultRow(Base):
     signals: Mapped[list] = mapped_column(JSON, default=list)
     priority_score: Mapped[int] = mapped_column(Integer, nullable=False)
     band: Mapped[str] = mapped_column(String, nullable=False)
+    # Which model produced this triage, and why. Populated when a TriageModelPort is in use;
+    # "classifier" and an empty rationale mean the older classifier path handled it.
+    model_version: Mapped[str] = mapped_column(String, nullable=False, default="classifier")
+    rationale: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 

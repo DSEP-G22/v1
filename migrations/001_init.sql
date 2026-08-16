@@ -302,6 +302,8 @@ CREATE TABLE triage_result (
 	signals JSON NOT NULL, 
 	priority_score INTEGER NOT NULL, 
 	band VARCHAR NOT NULL, 
+	model_version VARCHAR NOT NULL, 
+	rationale TEXT NOT NULL, 
 	created_at DATETIME NOT NULL, 
 	PRIMARY KEY (id), 
 	FOREIGN KEY(ticket_id) REFERENCES ticket (id)

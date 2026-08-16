@@ -82,19 +82,51 @@ def handle(ports: Ports, engine: Engine, settings: Settings, envelope: EventEnve
         ).scalar_one()
 
         fused_text = payload.fused_text
-        try:
-            department, department_confidence, alt_pairs = ports.classifier.classify(fused_text)
-        except Exception:
-            logger.exception("triage_svc: classifier failed ticket_id=%s, defaulting to general", ticket_id)
-            department, department_confidence, alt_pairs = Department.general, 0.0, []
 
+        # A TriageModelPort reads the whole fused payload and returns department, band and
+        # sentiment together (the LLM teacher, or the student distilled from it). When none is
+        # configured, fall back to the classifier plus the heuristic scorer, which is what keeps
+        # the rule-only and scikit-learn profiles, and the degradation tests, working.
+        triage_model = getattr(ports, "triage_model", None)
+        judgement = None
+        if triage_model is not None:
+            try:
+                judgement = triage_model.triage(fused_text)
+            except Exception:
+                logger.exception("triage_svc: triage model failed ticket_id=%s, falling back", ticket_id)
+
+        if judgement is not None:
+            department = judgement.department
+            department_confidence = judgement.department_confidence
+            alt_pairs = judgement.alternatives
+            sentiment = judgement.sentiment
+            score, band = judgement.priority_score, judgement.priority_band
+            # Signals still come from the deterministic policy, so the workspace can show why a
+            # score was assigned even when the model produced it. The model's own urgency signals
+            # are recorded alongside rather than replacing them.
+            _, _, signals = priority_policy.score(
+                _build_triage_inputs(fused_text, customer_segment, prior_count)
+            )
+            triage_model_version = judgement.model_version
+            triage_rationale = judgement.rationale
+        else:
+            try:
+                department, department_confidence, alt_pairs = ports.classifier.classify(fused_text)
+            except Exception:
+                logger.exception("triage_svc: classifier failed ticket_id=%s, defaulting to general", ticket_id)
+                department, department_confidence, alt_pairs = Department.general, 0.0, []
+
+            sentiment, _ = _infer_sentiment(fused_text)
+            triage_inputs = _build_triage_inputs(fused_text, customer_segment, prior_count)
+            score, band, signals = priority_policy.score(triage_inputs)
+            triage_model_version = "classifier"
+            triage_rationale = ""
+
+        # Routing rules override any model: an operator-authored rule is policy, and policy wins
+        # over a prediction (ADR-010).
         final_department = routing_policy.evaluate(
             _ROUTING_RULES, {"text": fused_text, "classifier_department": department}
         )
-
-        sentiment, _ = _infer_sentiment(fused_text)
-        triage_inputs = _build_triage_inputs(fused_text, customer_segment, prior_count)
-        score, band, signals = priority_policy.score(triage_inputs)
 
         TriageResultRepo(session).create(
             ticket_id=ticket_id,
@@ -105,6 +137,8 @@ def handle(ports: Ports, engine: Engine, settings: Settings, envelope: EventEnve
             signals=[s.model_dump(mode="json") for s in signals],
             priority_score=score,
             band=band.value,
+            model_version=triage_model_version,
+            rationale=triage_rationale,
         )
 
         TicketRepo(session).update_triage_summary(ticket_id, final_department.value, score, band.value)

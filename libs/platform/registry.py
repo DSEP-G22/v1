@@ -38,6 +38,9 @@ class Ports:
     text_generator: TextGeneratorPort
     embedder: EmbedderPort
     classifier: ClassifierPort
+    # Optional: when configured, triage_svc prefers this over `classifier`, because it
+    # judges department, band and sentiment from the fused payload in one pass.
+    triage_model: TriageModelPort | None
     vector_index: VectorIndexPort
     graph_store: GraphStorePort
     object_store: ObjectStorePort
@@ -151,6 +154,38 @@ def _build_graph_store() -> GraphStorePort:
     return InMemoryGraphStore(seed_path=_GRAPH_SEED)
 
 
+def _build_triage_model(settings: Settings) -> "TriageModelPort | None":
+    """Select the triage model: distilled student, teacher LLM, stub, or none.
+
+    Returning None is a supported outcome, not a failure: triage_svc then uses the classifier
+    path, which is what the rule-only profile and the degradation tests rely on.
+    """
+    impl = getattr(settings, "triage_model_impl", "none")
+
+    if impl == "stub":
+        from libs.platform.models.triage import StubTriageModel
+
+        return StubTriageModel()
+
+    if impl == "distilled":
+        from libs.platform.models.triage import DistilledTriageModel
+
+        return DistilledTriageModel(artifact_dir=Path(settings.distilled_triage_path))
+
+    if impl == "llm":
+        from libs.platform.models.triage import LlmTriageModel
+
+        return LlmTriageModel(
+            base_url=settings.ollama_base_url,
+            model=settings.llm_model,
+            prompt_path=_REPO_ROOT / "models" / "prompts" / "llm" / "triage.txt",
+            timeout=settings.llm_timeout_s,
+            num_ctx=settings.llm_num_ctx,
+        )
+
+    return None
+
+
 def build_ports(settings: Settings) -> Ports:
     text_generator = _build_text_generator(settings)
     embedder = _build_embedder(settings)
@@ -162,6 +197,7 @@ def build_ports(settings: Settings) -> Ports:
         text_generator=text_generator,
         embedder=embedder,
         classifier=_build_classifier(settings, text_generator),
+        triage_model=_build_triage_model(settings),
         vector_index=_build_vector_index(settings, embedding_model_version),
         graph_store=_build_graph_store(),
         object_store=LocalObjectStore(root=Path(settings.object_store_root)),
