@@ -51,6 +51,22 @@ def load_dataset(path: Path) -> list[dict]:
     return rows
 
 
+def split_dataset(rows: list[dict], test_fraction: float, seed: int) -> tuple[list[dict], list[dict]]:
+    """Deterministic train/test split, shared by every triage trainer.
+
+    The split is keyed on `ticket_id` rather than list position so the two approaches
+    (this fine-tuned encoder and `train_embedding_triage.py`) hold out exactly the same
+    tickets. Comparing accuracy across two different random splits would measure the split
+    as much as the model.
+    """
+    ordered = sorted(rows, key=lambda r: r["ticket_id"])
+    import random as _random
+
+    _random.Random(seed).shuffle(ordered)
+    split = int(len(ordered) * (1 - test_fraction))
+    return ordered[:split], ordered[split:]
+
+
 def build_torch_dataset(rows: list[dict], tokenizer, max_length: int = 256):
     import torch
     from torch.utils.data import Dataset
@@ -176,10 +192,8 @@ def main() -> int:
     multimodal = sum(1 for r in rows if r.get("is_multimodal"))
     print(f"      multimodal: {multimodal} ({multimodal / len(rows):.0%})")
 
-    random.shuffle(rows)
-    split = int(len(rows) * (1 - args.test_fraction))
-    train_rows, test_rows = rows[:split], rows[split:]
-    print(f"      train {len(train_rows)} | test {len(test_rows)}")
+    train_rows, test_rows = split_dataset(rows, args.test_fraction, args.seed)
+    print(f"      train {len(train_rows)} | test {len(test_rows)} (shared split, seed {args.seed})")
 
     print(f"[2/5] loading {args.encoder}")
     tokenizer = AutoTokenizer.from_pretrained(args.encoder)

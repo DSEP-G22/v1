@@ -246,6 +246,90 @@ class DistilledTriageModel:
         )
 
 
+class EmbeddingTriageModel:
+    """Frozen sentence embeddings with logistic-regression heads.
+
+    The cheap alternative to the distilled encoder: the payload is encoded once by the same
+    sentence-transformer that already serves retrieval, and three linear heads read that vector.
+    Nothing is fine-tuned, so the encoder never learns the domain, but retraining costs seconds
+    rather than minutes, which suits the continuous-learning loop.
+
+    Loaded lazily and degrading to rules, for the same reasons as `DistilledTriageModel`.
+    """
+
+    def __init__(self, artifact_dir: Path, encoder_name: str) -> None:
+        self._dir = Path(artifact_dir)
+        self._encoder_name = encoder_name
+        self._encoder = None
+        self._heads: dict = {}
+        self._config: dict = {}
+        self._failed = False
+
+    def _load(self) -> bool:
+        if self._encoder is not None:
+            return True
+        if self._failed:
+            return False
+
+        try:
+            import joblib
+            from sentence_transformers import SentenceTransformer
+
+            self._config = json.loads((self._dir / "config.json").read_text(encoding="utf-8"))
+            self._heads = joblib.load(self._dir / "heads.joblib")
+            # The artefact records the encoder it was fitted on. Using a different one would
+            # silently produce vectors from a different space, so the stored name wins.
+            self._encoder = SentenceTransformer(self._config.get("encoder", self._encoder_name))
+            logger.info(f"embedding triage heads loaded from {self._dir}", extra={"stage": "triage"})
+            return True
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"embedding triage unavailable ({type(exc).__name__}: {exc}); using rules",
+                           extra={"stage": "triage"})
+            self._failed = True
+            return False
+
+    def triage(self, fused_text: str) -> TriageJudgement:
+        if not self._load():
+            return _rule_fallback(fused_text, "embedding artefact unavailable")
+
+        departments = self._config.get("departments", [d.value for d in Department])
+        bands = self._config.get("bands", [b.value for b in PriorityBand])
+        sentiments = self._config.get("sentiments", [s.value for s in Sentiment])
+
+        vector = self._encoder.encode([fused_text], convert_to_numpy=True, normalize_embeddings=True)
+
+        def predict(head_name: str, vocabulary: list[str]) -> tuple[str, list[tuple[str, float]]]:
+            head = self._heads[head_name]
+            probabilities = head.predict_proba(vector)[0]
+            # `head.classes_` holds the label indices the head actually saw in training, which is
+            # not necessarily every class in the vocabulary. Mapping through it avoids reading a
+            # probability off the wrong position when a class was absent from the training split.
+            ranked = sorted(
+                ((vocabulary[int(cls)], float(p)) for cls, p in zip(head.classes_, probabilities)),
+                key=lambda pair: pair[1],
+                reverse=True,
+            )
+            return ranked[0][0], ranked
+
+        department, dept_ranked = predict("department", departments)
+        band, _ = predict("band", bands)
+        sentiment, _ = predict("sentiment", sentiments)
+        score = {"critical": 90, "high": 70, "normal": 45, "low": 20}.get(band, 20)
+
+        return TriageJudgement(
+            department=_coerce_department(department),
+            department_confidence=dept_ranked[0][1],
+            priority_band=_coerce_band(band, score),
+            priority_score=score,
+            sentiment=_coerce_sentiment(sentiment),
+            alternatives=[(_coerce_department(name), p) for name, p in dept_ranked[1:3]],
+            rationale="Embedding classifier: no rationale is generated. Frozen "
+                      f"{self._config.get('encoder', 'sentence encoder')} with linear heads, "
+                      f"fitted on labels from {self._config.get('teacher_model', 'the teacher LLM')}.",
+            model_version=f"embedding-triage/{Path(self._config.get('encoder', 'minilm')).name}",
+        )
+
+
 class StubTriageModel:
     """Deterministic judgement for CI."""
 

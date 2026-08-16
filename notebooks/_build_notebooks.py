@@ -1576,6 +1576,28 @@ B's field accuracy is measured to beat it on a real 30-60 image labelled set.
     return nb
 
 
+def _from_cell_module(module_name: str):
+    """Build a notebook from a `CELLS` list of (kind, source) pairs in a sibling module.
+
+    Later notebooks keep their cells in `_nbNN_cells.py` rather than inline here, because the
+    prose in them is long enough that inlining it makes this file hard to read. The setup cell is
+    prepended so every notebook still chdirs to the v1 root and pins a profile.
+    """
+
+    def build() -> "nbf.NotebookNode":
+        import importlib
+
+        module = importlib.import_module(module_name)
+        cells = [_SETUP_CELL]
+        for kind, source in module.CELLS:
+            cells.append(md(source) if kind == "markdown" else code(source))
+        nb = nbf.v4.new_notebook()
+        nb["cells"] = cells
+        return nb
+
+    return build
+
+
 NOTEBOOKS = {
     "01_data_preparation.ipynb": build_01_data_preparation,
     "02_department_classifier.ipynb": build_02_department_classifier,
@@ -1585,6 +1607,8 @@ NOTEBOOKS = {
     "06_asr_evaluation.ipynb": build_06_asr_evaluation,
     "07_knowledge_and_graphrag.ipynb": build_07_knowledge_and_graphrag,
     "08_end_to_end_evaluation.ipynb": build_08_end_to_end_evaluation,
+    "09_unified_dataset.ipynb": _from_cell_module("_nb09_cells"),
+    "10_llm_triage_and_students.ipynb": _from_cell_module("_nb10_cells"),
 }
 
 

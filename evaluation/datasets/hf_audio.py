@@ -67,11 +67,17 @@ def is_available() -> bool:
         return False
 
 
-def load(split: str = "train", limit: int | None = None, cache_dir: str | None = None):
+def load(split: str = "train", limit: int | None = None, cache_dir: str | None = None,
+         stratify: bool = True, seed: int = 42):
     """Return the raw Hugging Face dataset, or None when `datasets` is not installed.
 
     minds14 publishes a single `train` split; callers subset it themselves so the choice of
     evaluation subset stays visible in the notebook rather than hidden here.
+
+    The file order in minds14 is grouped by intent, so taking the first N rows returns N
+    utterances of the *same* intent: a 6-row subset came back as six `joint_account` calls.
+    `stratify` instead takes rows round-robin across intents, so a small subset still covers the
+    intent space. Pass `stratify=False` for a reproducible contiguous slice.
     """
     if not is_available():
         return None
@@ -81,9 +87,40 @@ def load(split: str = "train", limit: int | None = None, cache_dir: str | None =
     # Resample on read: minds14 is 8 kHz, Whisper expects 16 kHz, and doing it here means no
     # caller has to remember.
     ds = ds.cast_column("audio", Audio(sampling_rate=TARGET_SAMPLE_RATE))
-    if limit is not None:
-        ds = ds.select(range(min(limit, len(ds))))
-    return ds
+
+    if limit is None or limit >= len(ds):
+        return ds
+    if not stratify:
+        return ds.select(range(limit))
+
+    # Round-robin over intents. Reading `intent_class` alone avoids decoding any audio here,
+    # which would otherwise cost a full pass over the corpus just to build the index.
+    import random as _random
+
+    by_intent: dict[int, list[int]] = {}
+    for index, intent_class in enumerate(ds["intent_class"]):
+        by_intent.setdefault(intent_class, []).append(index)
+
+    rng = _random.Random(seed)
+    for indices in by_intent.values():
+        rng.shuffle(indices)
+
+    picked: list[int] = []
+    cursors = {intent: 0 for intent in by_intent}
+    while len(picked) < limit:
+        progressed = False
+        for intent, indices in sorted(by_intent.items()):
+            cursor = cursors[intent]
+            if cursor < len(indices):
+                picked.append(indices[cursor])
+                cursors[intent] = cursor + 1
+                progressed = True
+                if len(picked) == limit:
+                    break
+        if not progressed:  # corpus exhausted before the limit
+            break
+
+    return ds.select(sorted(picked))
 
 
 def materialise(output_dir: Path, limit: int = 50, split: str = "train") -> list[AudioSample]:
@@ -106,14 +143,22 @@ def materialise(output_dir: Path, limit: int = 50, split: str = "train") -> list
 
     for i, row in enumerate(ds):
         audio = row["audio"]
-        path = output_dir / f"minds14_{i:04d}.wav"
+        intent = intent_names[row["intent_class"]] if intent_names else str(row.get("intent_class", ""))
+
+        # The filename encodes the intent, not just the position. Naming purely by enumeration
+        # index was a cache-invalidation bug: `minds14_0001.wav` meant a different utterance
+        # depending on how the subset was selected, and the `path.exists()` skip below then
+        # reused a stale file whose audio no longer matched the transcript and intent recorded
+        # beside it. Including the intent means a changed subset writes new files instead of
+        # silently reading mismatched ones.
+        sample_id = f"minds14_{intent}_{i:04d}"
+        path = output_dir / f"{sample_id}.wav"
         if not path.exists():
             sf.write(path, audio["array"], audio["sampling_rate"])
 
-        intent = intent_names[row["intent_class"]] if intent_names else str(row.get("intent_class", ""))
         samples.append(
             AudioSample(
-                id=f"minds14_{i:04d}",
+                id=sample_id,
                 audio_path=path,
                 reference_text=row.get("english_transcription") or row.get("transcription", ""),
                 intent=intent,

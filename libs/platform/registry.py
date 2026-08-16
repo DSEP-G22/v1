@@ -172,6 +172,14 @@ def _build_triage_model(settings: Settings) -> "TriageModelPort | None":
 
         return DistilledTriageModel(artifact_dir=Path(settings.distilled_triage_path))
 
+    if impl == "embedding":
+        from libs.platform.models.triage import EmbeddingTriageModel
+
+        return EmbeddingTriageModel(
+            artifact_dir=Path(settings.embedding_triage_path),
+            encoder_name=settings.embedding_model,
+        )
+
     if impl == "llm":
         from libs.platform.models.triage import LlmTriageModel
 

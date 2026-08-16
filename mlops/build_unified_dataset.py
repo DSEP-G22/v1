@@ -177,8 +177,12 @@ def transcribe_audio(count: int) -> list[dict]:
             "model_version": "faster-whisper-base",
             "duration_s": round(sample.duration_s, 2),
             "source_intent": sample.intent,
+            # The department this utterance is *about*, mapped from the minds14 intent. The
+            # builder attaches a call only to a ticket of the same department, so the two
+            # modalities describe one problem instead of two.
+            "source_department": sample.department,
         })
-        print(f"  transcribed {sample.id} conf={confidence:.3f}")
+        print(f"  transcribed {sample.id} conf={confidence:.3f} intent={sample.intent}")
     return transcripts
 
 
@@ -212,16 +216,26 @@ def main() -> int:
     # noise. Coherence is the whole point of a fused payload.
     TELECOM_DEPARTMENTS = {"technical_support", "network_operations", "field_service"}
 
-    audio_index = 0
+    # Audio attaches only to a ticket of the same department as the call is about. An earlier
+    # version attached calls to any ticket, on the reasoning that minds14 is "generic support
+    # speech". It is not: it is banking-domain, so that rule produced tickets whose text asked to
+    # track an order while the attached call asked to open a joint account. Two unrelated problems
+    # in one ticket is not a hard multimodal example, it is a corrupt label, and the teacher would
+    # have had to pick one topic arbitrarily.
+    audio_by_department: dict[str, list[dict]] = {}
+    for transcript_row in transcripts:
+        audio_by_department.setdefault(transcript_row["source_department"], []).append(transcript_row)
+    audio_cursor = {department: 0 for department in audio_by_department}
+
     for index, row in enumerate(rows):
         department = row["department"]
 
-        # Audio attaches to any ticket: a customer phoning about any topic is realistic, and the
-        # minds14 transcripts are generic support speech.
         transcript = None
-        if audio_index < len(transcripts) and random.random() < 0.5:
-            transcript = transcripts[audio_index]
-            audio_index += 1
+        available = audio_by_department.get(department, [])
+        cursor = audio_cursor.get(department, 0)
+        if cursor < len(available) and random.random() < 0.5:
+            transcript = available[cursor]
+            audio_cursor[department] = cursor + 1
 
         # A router photograph only makes sense on a telecom fault. Attaching one to a billing
         # query would teach the model that images are uninformative.
@@ -299,6 +313,21 @@ def main() -> int:
             if not record["fused_text"][start:end].strip():
                 raise AssertionError(f"bad provenance span in {record['ticket_id']}")
     print("  provenance spans verified on the first 200 records")
+
+    # Every attached modality must agree with the ticket's department. Incoherent pairings are
+    # invisible in the aggregate counts above, so they are asserted rather than eyeballed.
+    for record in records:
+        department = record["ground_truth"]["department"]
+        for transcript_row in record["transcripts"]:
+            if transcript_row["source_department"] != department:
+                raise AssertionError(
+                    f"{record['ticket_id']}: {transcript_row['source_department']} audio on a "
+                    f"{department} ticket"
+                )
+        for visual_row in record["visual_summaries"]:
+            if visual_row["implied_department"] not in TELECOM_DEPARTMENTS:
+                raise AssertionError(f"{record['ticket_id']}: non-telecom image attached")
+    print("  modality coherence verified on all records")
     return 0
 
 

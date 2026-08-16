@@ -62,9 +62,11 @@ class Settings(BaseSettings):
     auth_token_admin: str = "dev-admin-token"
 
     # Triage model: none uses the classifier, llm calls the teacher through Ollama, distilled
-    # runs the student trained on the teacher's labels, stub is for CI.
-    triage_model_impl: str = "none"  # none | llm | distilled | stub
+    # runs the fine-tuned student, embedding runs linear heads on frozen sentence vectors,
+    # stub is for CI.
+    triage_model_impl: str = "none"  # none | llm | distilled | embedding | stub
     distilled_triage_path: Path = Path("./models/artifacts/distilled_triage")
+    embedding_triage_path: Path = Path("./models/artifacts/embedding_triage")
 
     # Origins allowed to call this API from a browser. The frontend is deployed separately, so
     # its origin must be listed here explicitly, never "*", because the API accepts credentials.

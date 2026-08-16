@@ -24,6 +24,7 @@ import json
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -120,11 +121,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Label unified payloads with a teacher LLM")
     parser.add_argument("--input", default=str(INPUT))
     parser.add_argument("--output", default=str(OUTPUT))
-    parser.add_argument("--model", default="llama3.1:8b-instruct-q4_K_M")
+    # Ollama cloud model by default. The local 8B is a drop-in alternative
+    # (`--model llama3.1:8b-instruct-q4_K_M`) but has to be pulled first, and the pull failed
+    # repeatedly on this connection. A cloud model needs no download and runs on the same
+    # /api/chat endpoint, so nothing else in this script changes.
+    parser.add_argument("--model", default="gpt-oss:120b-cloud")
     parser.add_argument("--base-url", default="http://localhost:11434")
     parser.add_argument("--limit", type=int, default=None, help="rows to label this run")
     parser.add_argument("--timeout", type=float, default=180.0)
     parser.add_argument("--restart", action="store_true", help="ignore existing output and relabel")
+    parser.add_argument("--workers", type=int, default=4,
+                        help="concurrent teacher calls; above 4 the cloud endpoint starts refusing")
     args = parser.parse_args()
 
     prompt = PROMPT_PATH.read_text(encoding="utf-8")
@@ -158,47 +165,60 @@ def main() -> int:
     ok = failed = 0
     latencies: list[float] = []
 
+    def label_one(row: dict) -> tuple[dict, dict | None, float, str]:
+        """Run one teacher call. Returns (row, label_or_None, latency, failure_reason)."""
+        try:
+            label, latency, raw = call_teacher(
+                args.base_url, args.model, prompt, row["fused_text"], args.timeout
+            )
+        except Exception as exc:  # noqa: BLE001
+            return row, None, 0.0, f"call failed: {type(exc).__name__}"
+
+        if label is None:
+            return row, None, latency, f"unparseable: {raw[:70]!r}"
+
+        valid, reason = validate(label)
+        if not valid:
+            return row, None, latency, f"rejected: {reason}"
+
+        return row, label, latency, ""
+
+    # The teacher is a network call, so the run is latency-bound rather than CPU-bound and
+    # parallelises well: measured 4.5 s/row sequentially against 2.2 s/row at 4 workers.
+    # Concurrency is capped low deliberately. At 8 workers the cloud endpoint started returning
+    # failures for roughly a third of requests, so more workers meant fewer labels, not more.
+    # Writes stay on this thread, so the append-and-flush-per-row property that makes the run
+    # resumable is unchanged.
+    completed = 0
     with output_path.open("a", encoding="utf-8") as fh:
-        for index, row in enumerate(pending, 1):
-            try:
-                label, latency, raw = call_teacher(
-                    args.base_url, args.model, prompt, row["fused_text"], args.timeout
-                )
-            except Exception as exc:  # noqa: BLE001
-                print(f"  [{index}/{len(pending)}] {row['ticket_id']} call failed: {type(exc).__name__}")
-                failed += 1
-                continue
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            for row, label, latency, reason in pool.map(label_one, pending):
+                completed += 1
+                if label is None:
+                    print(f"  [{completed}/{len(pending)}] {row['ticket_id']} {reason}")
+                    failed += 1
+                    continue
 
-            if label is None:
-                print(f"  [{index}/{len(pending)}] {row['ticket_id']} unparseable: {raw[:70]!r}")
-                failed += 1
-                continue
+                latencies.append(latency)
+                record = {
+                    "ticket_id": row["ticket_id"],
+                    "fused_text": row["fused_text"],
+                    "modalities": row["metadata"]["modalities"],
+                    "is_multimodal": row["metadata"]["is_multimodal"],
+                    "flags": row["flags"],
+                    "teacher_model": args.model,
+                    "teacher_latency_s": round(latency, 3),
+                    "teacher_label": label,
+                    "ground_truth": row.get("ground_truth", {}),
+                }
+                fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+                fh.flush()  # a long run will be interrupted; never lose completed work
+                ok += 1
 
-            valid, reason = validate(label)
-            if not valid:
-                print(f"  [{index}/{len(pending)}] {row['ticket_id']} rejected: {reason}")
-                failed += 1
-                continue
-
-            latencies.append(latency)
-            record = {
-                "ticket_id": row["ticket_id"],
-                "fused_text": row["fused_text"],
-                "modalities": row["metadata"]["modalities"],
-                "is_multimodal": row["metadata"]["is_multimodal"],
-                "flags": row["flags"],
-                "teacher_model": args.model,
-                "teacher_latency_s": round(latency, 3),
-                "teacher_label": label,
-                "ground_truth": row.get("ground_truth", {}),
-            }
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-            fh.flush()  # a long run will be interrupted; never lose completed work
-            ok += 1
-
-            if index % 10 == 0 or index == len(pending):
-                mean = sum(latencies) / len(latencies) if latencies else 0.0
-                print(f"  [{index}/{len(pending)}] ok={ok} failed={failed} mean_latency={mean:.2f}s")
+                if completed % 25 == 0 or completed == len(pending):
+                    mean = sum(latencies) / len(latencies) if latencies else 0.0
+                    print(f"  [{completed}/{len(pending)}] ok={ok} failed={failed} "
+                          f"mean_latency={mean:.2f}s")
 
     print(f"\nlabelled {ok}, failed {failed}, written to {output_path}")
     if latencies:

@@ -69,9 +69,43 @@ banking call audio and a photograph of a router: an input no customer could ever
 that a teacher asked to triage would be labelling as noise. Images now attach only to telecom
 departments, and are drawn from scenarios matching that department.
 
+### Modality coherence, and two bugs it took assertions to find
+
+Both bugs below produced a dataset that was correct in every summary statistic (row counts,
+modality counts, department distribution) and wrong row by row. Both are now asserted at the end
+of the build and covered by `tests/unit/test_unified_dataset_coherence.py`.
+
+**Audio was attached to unrelated tickets.** The builder attached any call to any ticket, on the
+stated assumption that minds14 was generic support speech. It is not: it is banking-domain. The
+result was tickets whose text asked to track an order while the attached call asked to open a
+joint account. Two unrelated problems in one ticket is not a hard multimodal example, it is a
+corrupt label, and the teacher had to pick one topic arbitrarily. Audio now attaches only where
+the call's intent-mapped department matches the ticket's.
+
+**The audio subset was one intent repeated.** minds14 is stored grouped by intent, so
+`ds.select(range(6))` returned six `joint_account` calls. `hf_audio.load(stratify=True)` now takes
+rows round-robin across intents.
+
+**Stale WAV files silently mismatched their labels.** `materialise` named files by enumeration
+index and skipped any that already existed. Once subset selection changed, `minds14_0001.wav`
+referred to a different utterance, but the old file was still on disk and was read instead,
+pairing one row's audio with another row's transcript and intent. Filenames now encode the intent,
+so a changed subset writes new files rather than reading mismatched ones.
+
 ## The teacher
 
-`llama3.1:8b-instruct-q4_K_M` through Ollama, prompted by `models/prompts/llm/triage.txt`.
+`gpt-oss:120b-cloud` through Ollama, prompted by `models/prompts/llm/triage.txt`.
+
+The original choice was a local `llama3.1:8b-instruct-q4_K_M`. The pull failed repeatedly on this
+connection: the 8B stalled around 20% at 3.5 MB/s, a 3B retry restarted from zero, and a 0.5B
+attempt died with `net/http: TLS handshake timeout` against the CDN. An Ollama cloud model needs
+no download and runs on the same `/api/chat` endpoint, so the switch is a single flag and nothing
+else in the pipeline changes. Switching back to a local model once one is pulled is the same flag.
+
+The teacher is a network call, so labelling is latency-bound rather than CPU-bound and
+parallelises: 4.5 s/row sequentially against 2.2 s/row at 4 workers. Concurrency is capped at 4
+deliberately, because at 8 workers the cloud endpoint began refusing roughly a third of requests,
+so more workers produced fewer labels rather than more.
 
 The prompt is worth reading in full, but three instructions in it carry most of the weight:
 
@@ -111,6 +145,41 @@ the stated confidence is the strongest soft signal available. This is weaker tha
 divergence against teacher logits. Serving the teacher through vLLM, which can return logprobs,
 would allow the stronger form.
 
+## The second student: frozen embeddings with linear heads
+
+A fine-tuned 66M-parameter encoder is only worth its training cost if it beats the obvious cheap
+alternative, so that alternative is built and measured rather than assumed to be worse.
+
+```
+fused_text -> [frozen MiniLM] -> 384-d vector -> LogisticRegression x3
+```
+
+`mlops/train_embedding_triage.py` encodes each payload once with the sentence-transformer that
+already serves retrieval, caches the vectors, and fits three logistic-regression heads on them.
+
+What it buys:
+
+- **Training costs seconds, not minutes**, and the embedding cache means re-fitting after new
+  agent corrections is nearly free. That is the cost the continuous-learning loop pays repeatedly,
+  so it matters more than a one-off training run does.
+- **It is the baseline that makes the distilled number interpretable.** Without it, an accuracy
+  figure for the fine-tuned model cannot be called good or bad.
+- **It adds no new model to the deployment**, because the encoder is already there.
+
+What it gives up: the encoder never adapts to the domain. It cannot learn that `[AUDIO:...]` marks
+lower-trust evidence, or what a DSL sync failure is, because its weights are frozen. Closing that
+gap is precisely what fine-tuning is for.
+
+Two details are load-bearing. `class_weight="balanced"` is set on each head, because the
+department distribution is heavily skewed towards `general` and `billing` and an unweighted linear
+model on skewed data collapses onto the majority class while still reporting a respectable
+accuracy. And the teacher's confidence weights each example, mirroring the distilled trainer, so
+both approaches learn from the same signal.
+
+Both trainers call `split_dataset()`, which sorts by `ticket_id` before shuffling, so the held-out
+set is identical for both. Comparing accuracy across two different random splits would measure the
+split as much as the model.
+
 ## Serving
 
 `TriageModelPort` is a new port alongside `ClassifierPort`. It exists because a triage LLM
@@ -121,7 +190,8 @@ that returns only a department would discard most of it.
 |---|---|---|
 | `none` | falls back to `ClassifierPort` | the original scikit-learn and rule paths |
 | `llm` | `LlmTriageModel` | teacher served directly; accurate, seconds per ticket |
-| `distilled` | `DistilledTriageModel` | the student; milliseconds, intended production path |
+| `distilled` | `DistilledTriageModel` | fine-tuned student; milliseconds, intended production path |
+| `embedding` | `EmbeddingTriageModel` | frozen encoder with linear heads; cheapest to retrain |
 | `stub` | `StubTriageModel` | CI |
 
 `triage_svc` prefers a triage model when one is configured and falls back to the classifier
@@ -143,19 +213,24 @@ attributed to the model that produced it.
 
 ```bash
 # 1. Build unified payloads from the multimodal sources.
-python -m mlops.build_unified_dataset --limit 2000 --with-audio 40
+#    --with-audio costs a Whisper pass per call and dominates the runtime.
+python -m mlops.build_unified_dataset --limit 1200 --with-audio 60
 
-# 2. Label them with the teacher. Resumable; expect 1-3 s per ticket on CPU.
-ollama serve
-ollama pull llama3.1:8b-instruct-q4_K_M
-python -m mlops.llm_triage_labeller --limit 500
+# 2. Label them with the teacher. Resumable, so an interrupted run is re-runnable as is.
+ollama serve                       # a cloud model needs no pull, only `ollama signin`
+python -m mlops.llm_triage_labeller --limit 1200 --workers 4
 
-# 3. Distil the student.
+# 3. Train both students on the same split, then compare.
 python -m mlops.train_distilled_triage --epochs 3 --register
+python -m mlops.train_embedding_triage --register
 
-# 4. Serve it.
-#    .env:  TRIAGE_MODEL_IMPL=distilled
+# 4. Serve whichever wins.
+#    .env:  TRIAGE_MODEL_IMPL=distilled   (or: embedding | llm | none)
 ```
+
+Notebooks 09 and 10 walk through the same pipeline with the reasoning attached: **09** builds the
+unified dataset and checks its coherence, **10** labels it, trains both students and compares
+them.
 
 ## Status
 
