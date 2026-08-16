@@ -74,7 +74,12 @@ services:
       start_period: 20s
 
   spark-master:
-    image: bitnami/spark:3.5
+    # bitnamilegacy, not bitnami: Broadcom moved the Bitnami catalogue in 2025 and deleted the
+    # old version tags from docker.io/bitnami, so `bitnami/spark:3.5` no longer resolves. The
+    # legacy namespace holds the same images, and they keep the SPARK_MODE/SPARK_MASTER_URL
+    # contract the service definitions below rely on — apache/spark uses different entrypoints
+    # and would need these services rewritten.
+    image: bitnamilegacy/spark:3.5
     profiles: ["mlops", "full"]
     environment:
       SPARK_MODE: master
@@ -87,7 +92,7 @@ services:
       - ./:/opt/project:ro
 
   spark-worker:
-    image: bitnami/spark:3.5
+    image: bitnamilegacy/spark:3.5
     profiles: ["mlops", "full"]
     depends_on:
       - spark-master
@@ -119,7 +124,8 @@ services:
       retries: 5
 
   kafka:
-    image: bitnami/kafka:3.7
+    # bitnamilegacy for the same reason as spark above.
+    image: bitnamilegacy/kafka:3.7
     profiles: ["full"]
     environment:
       KAFKA_CFG_NODE_ID: "1"
