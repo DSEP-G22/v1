@@ -214,6 +214,8 @@ a fabricated result.
 | `06_asr_evaluation` | faster-whisper across model sizes on the sample audio: latency per audio-minute, per-segment confidence distribution, threshold recommendation | Threshold recommendation, plot |
 | `07_knowledge_and_graphrag` | Chunking strategies, embedding-model comparison, recall@5 and MRR over 40 question-to-chunk pairs, then dense-only against dense-plus-graph-expansion. This is the experiment that justifies the second store (ADR-007) | Chunking and embedding parameters |
 | `08_end_to_end_evaluation` | Drives 100 synthetic multimodal tickets through the real pipeline via the same entrypoint `intake_api` uses, measuring per-stage latency and accuracy | `evaluation/reports/e2e_report.{json,csv,md}` |
+| `09_unified_dataset` | Fuses Bitext text, real Whisper transcripts of minds14 telephony and router LED scenarios into `UnifiedTicketPayload`-shaped records, then asserts modality coherence and provenance spans | `data/processed/unified_dataset.jsonl` |
+| `10_llm_triage_and_students` | Labels those payloads with a teacher LLM, then trains and compares two ways of serving that judgement cheaply: a fine-tuned DistilBERT and logistic heads on frozen sentence embeddings | `data/processed/distillation_dataset.jsonl`, `models/artifacts/{distilled,embedding}_triage/` |
 
 ### Reading the numbers honestly
 
@@ -228,10 +230,19 @@ was produced under `APP_PROFILE=stub`, where
 in for the trained artifact. Its 0.590 department accuracy and 0.229 fault accuracy measure the
 plumbing, not the models. Stage latencies from that run are meaningful; accuracy numbers are not.
 
+The same caution applies to the triage models from notebook 10. Their reported accuracy is
+**agreement with the teacher LLM**, which is the right metric for distillation but is not
+correctness in an absolute sense, since neither student can exceed the teacher it imitates. Read
+macro-F1 rather than accuracy: `general` and `billing` cover 71% of teacher labels, so a model
+that learned only those two would still post a respectable accuracy. And `network_operations` (9
+rows) and `field_service` (4 rows) are too rare in the corpus to be either learned or evaluated,
+which is a property of the source data rather than of the models. See
+`docs/17-llm-triage-distillation.md`.
+
 ## Testing
 
 ```bash
-APP_PROFILE=stub .venv/Scripts/python.exe -m pytest       # 42 tests, about 10 seconds
+APP_PROFILE=stub .venv/Scripts/python.exe -m pytest       # 47 tests, about 11 seconds
 ```
 
 | Suite | Checks |

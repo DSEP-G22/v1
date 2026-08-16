@@ -115,7 +115,6 @@ def fit_head(name: str, x_train, y_train, x_test, y_test, classes: list[str], we
         C=4.0,
         class_weight="balanced",
         random_state=seed,
-        n_jobs=-1,
     )
     # The teacher's confidence weights each example, mirroring the distilled trainer so the two
     # approaches learn from the same signal and the comparison stays like for like.

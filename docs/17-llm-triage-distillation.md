@@ -234,41 +234,65 @@ them.
 
 ## Status
 
-Built and verified end to end:
+Run end to end on real data with a real teacher.
 
 | Stage | Result |
 |---|---|
-| Unified dataset | 300 payloads, real Whisper transcripts of minds14 telephony, provenance spans verified |
-| Teacher labelling | 300 labelled, 0 rejected, resumable, JSON parser handles fenced and prose-wrapped output |
-| Student training | DistilBERT 66.4M params, 2 epochs on CPU |
-| Student accuracy | department 0.85, band 0.87, sentiment 0.92 on a 60-row held-out split |
-| Student latency | **73 ms per ticket** after warm-up |
-| Serving | loads through `TriageModelPort` in the `cpu` profile; `triage_svc` uses it; 42 tests pass |
+| Unified dataset | 1,200 payloads, 132 multimodal, real Whisper transcripts of minds14 telephony |
+| Teacher labelling | **1,198 labelled by `gpt-oss:120b-cloud`**, 2 failed, p50 6.06 s p95 9.29 s per ticket |
+| Split | 958 train / 240 test, shared by both students |
 
-**The teacher was a stand-in, not Llama 3.1.** The Ollama model download failed repeatedly on this
-connection: the 8B stalled around 20% at 3.5 MB/s, a 3B retry restarted from zero, and a 0.5B
-attempt died with `net/http: TLS handshake timeout` against the CDN. To keep the pipeline
-verifiable, the labeller was driven by a deterministic keyword teacher through the same
-`call_teacher` seam, so every other component was exercised for real.
+The teacher's own latency is the argument for distilling: 6 seconds per ticket is most of the
+SRS budget for the entire pipeline, spent on triage alone.
 
-What this means for the numbers. The 0.85 department accuracy measures how well the student
-reproduces its teacher, which is the right metric for distillation, but the teacher here was a
-keyword rule, so the figure demonstrates that distillation works mechanically rather than that the
-system triages well. `models/artifacts/distilled_triage/config.json` records
-`teacher_model: "stand-in rule teacher"` so the artefact cannot be mistaken for one distilled from
-an LLM.
+### Teacher label distribution
 
-To obtain real numbers, once `ollama pull llama3.1:8b-instruct-q4_K_M` completes:
-
-```bash
-rm data/processed/distillation_dataset.jsonl
-python -m mlops.llm_triage_labeller --limit 500
-python -m mlops.train_distilled_triage --epochs 3 --register
+```
+general 483 | billing 366 | sales 217 | retention 77
+technical_support 42 | network_operations 9 | field_service 4
 ```
 
-Nothing in the code changes. The stand-in existed only in a throwaway test harness, never in
-`mlops/llm_triage_labeller.py` itself.
+Two things follow from this and both matter more than any headline accuracy.
 
-The 300-row dataset is also small, and 9% multimodal. Both should rise substantially before the
-accuracy figures mean anything: `--limit 2000 --with-audio 40` is a more reasonable starting
-point.
+**The telecom departments are nearly absent.** `network_operations` (9) and `field_service` (4)
+have too few examples to learn or to evaluate. This is a property of the source corpus, not of
+either model: Bitext is e-commerce and customer-service text, and the 928-row telecom supplement
+is a small fraction of the sampled rows. Any macro-F1 quoted below is dominated by how these two
+classes happen to fall in the split.
+
+**The teacher agrees with the Bitext ground-truth department on 58.5% of rows.** That number is
+not a teacher error rate, and reading it as one would be wrong. Bitext labels a text by its
+surface intent; the teacher reads the fused payload, including audio and images, and is asked to
+route to a telecom department that Bitext's taxonomy does not contain. Divergence is expected
+where the payload carries evidence the original text did not. It does mean the teacher, not
+Bitext, defines the target both students are trained against.
+
+### The two students
+
+Both trained on the identical 958/240 split.
+
+| | fine-tuned DistilBERT | frozen MiniLM + logistic heads |
+|---|---|---|
+| department accuracy | see `models/artifacts/distilled_triage/config.json` | **0.838** |
+| department macro-F1 | " | **0.711** |
+| band accuracy | " | **0.854** |
+| sentiment accuracy | " | **0.804** |
+| latency per ticket | ~73 ms | **10.6 ms** (measured in-process: 22 ms) |
+| training cost | minutes on CPU | **seconds**, embeddings cached |
+
+The embedding baseline is the number to beat, and it is a strong one: 0.838 accuracy at 10.6 ms
+from a frozen encoder and three linear heads that fit in seconds. Fine-tuning 66M parameters has
+to earn its cost against that, and on a corpus this size and this skewed, it is not obvious that
+it does.
+
+### What these numbers do and do not show
+
+- They measure **agreement with the teacher**, which is the correct metric for distillation but
+  is not correctness in any absolute sense. Neither student can exceed its teacher on the
+  judgement it is imitating.
+- **Macro-F1 is the honest column**, not accuracy. With `general` and `billing` covering 71% of
+  rows, a model that learned only those two would still post a respectable accuracy.
+- **The telecom departments remain effectively untested.** Fixing that needs more telecom source
+  text, not more training epochs.
+- 132 multimodal rows out of 1,198 (11%) is still thin for claims about multimodal triage
+  specifically.
