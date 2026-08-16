@@ -135,6 +135,13 @@ docker compose --profile full up     # everything, plus Kafka and Postgres
 The Spark services are a real standalone cluster, not a `local[*]` shim. Ollama is deliberately
 not containerised: it needs the host GPU, so the API reaches it at `host.docker.internal:11434`.
 
-**Docker was not exercised on this machine.** `com.docker.service` is stopped and starting it
-requires elevation this session did not have, so the compose file and both Dockerfiles are written
-and reviewed but unbuilt. Everything else in this document was run and verified.
+The compose stack has since been brought up and verified: MLflow healthy on `:5000`, the Spark
+master reporting 2 alive workers on `:8090`, Postgres accepting connections, and the Kafka broker
+answering an API-versions probe. Two things had to change to get there — `bitnami/spark:3.5` and
+`bitnami/kafka:3.7` no longer exist on Docker Hub and are now pinned to `bitnamilegacy/*`. See
+`18-running-the-system.md` for the bringup sequence and the rest of the known issues.
+
+**Still unbuilt:** the two application images (`docker/Dockerfile.api`, `docker/Dockerfile.ui`).
+They are written and reviewed, and the CI workflow builds them, but neither has been built
+locally. **Submitting `spark_retrain.py` to the containerised cluster is also unverified** —
+`local[*]` is the exercised path.

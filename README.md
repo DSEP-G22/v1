@@ -34,6 +34,11 @@ Sign in with `dev-agent-token`, `dev-lead-token` or `dev-admin-token`.
 `APP_PROFILE=stub` needs no GPU, no Ollama and no network. Set `APP_PROFILE=cpu` with
 `ollama serve` running for real models. Details in `docs/01-setup.md`.
 
+Note that on `stub` a voice message is **not** transcribed: the stub transcriber substitutes a
+fixed sentence, so the pipeline looks healthy while ignoring the audio. Use `cpu` whenever the
+output matters. To bring up MLflow, Spark, Kafka and Postgres as well, see
+`docs/18-running-the-system.md`.
+
 ## Architecture
 
 Twelve pipeline services communicate only through an event broker and the database. No service
@@ -273,10 +278,11 @@ tests/           unit, integration, architecture, degradation
 
 ## Documentation
 
-Start with `docs/01-setup.md`. `docs/02-architecture-mapping.md` maps each SAD element to its v1
-module and lists every deviation. `docs/14-ui.md` covers the agent workspace.
-`docs/11-troubleshooting.md` is a symptom-to-cause table for the failures this stack actually
-produces.
+Start with `docs/01-setup.md`. `docs/18-running-the-system.md` brings up every tier at once,
+including the Docker infrastructure, and records the failures that occur when you do.
+`docs/02-architecture-mapping.md` maps each SAD element to its v1 module and lists every
+deviation. `docs/14-ui.md` covers the agent workspace. `docs/11-troubleshooting.md` is a
+symptom-to-cause table for the failures this stack actually produces.
 
 ## Status
 
