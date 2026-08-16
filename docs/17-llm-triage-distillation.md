@@ -275,21 +275,38 @@ Bitext, defines the target both students are trained against.
 
 ### The two students
 
-Both trained on the identical 958/240 split.
+Both trained on the identical 958/240 split, against the same teacher labels.
 
 | | fine-tuned DistilBERT | frozen MiniLM + logistic heads |
 |---|---|---|
-| department accuracy | see `models/artifacts/distilled_triage/config.json` | **0.838** |
-| department macro-F1 | " | **0.711** |
-| band accuracy | " | **0.854** |
-| sentiment accuracy | " | **0.804** |
-| latency per ticket | ~73 ms | **10.6 ms** (measured in-process: 22 ms) |
-| training cost | minutes on CPU | **seconds**, embeddings cached |
+| department accuracy | 0.796 | **0.838** |
+| department macro-F1 | 0.423 | **0.711** |
+| band accuracy | 0.846 | **0.854** |
+| sentiment accuracy | 0.817 | **0.804** |
+| latency per ticket | ~73 ms | **~11 ms** |
+| training cost | ~15 min/epoch on CPU | **seconds**, embeddings cached |
+| parameters trained | 66M | ~2.7K (three linear heads) |
 
-The embedding baseline is the number to beat, and it is a strong one: 0.838 accuracy at 10.6 ms
-from a frozen encoder and three linear heads that fit in seconds. Fine-tuning 66M parameters has
-to earn its cost against that, and on a corpus this size and this skewed, it is not obvious that
-it does.
+**The cheap approach wins, and not narrowly.** The frozen encoder beats the fine-tuned one on
+department accuracy and by a wide margin on macro-F1 (0.711 against 0.423), at a seventh of the
+latency and a fraction of the training cost.
+
+The macro-F1 gap is the informative one, and it has a clear cause. `class_weight="balanced"` on
+the logistic heads forces attention onto the rare departments; the DistilBERT run has no
+equivalent, so with `general` and `billing` covering 71% of labels it drifts towards the majority
+classes. On 958 rows there is also not enough signal to move 66M parameters usefully, while a
+frozen encoder that already understands English sentences needs to learn only a decision boundary.
+
+This is why the baseline was built rather than assumed. Fine-tuning is the more sophisticated
+technique and it is the one that loses here. Reporting the distilled number alone, with nothing to
+compare it against, would have made 0.796 look like a result.
+
+Two honest caveats on the comparison:
+
+- The DistilBERT run is **one epoch**, stopped there because each costs about 15 minutes on this
+  CPU. More epochs, a balanced loss and a learning-rate sweep would likely narrow the gap. What
+  the table shows is the cost of getting there, not a ceiling.
+- Both figures are agreement with the teacher, so neither model can exceed it.
 
 ### What these numbers do and do not show
 
