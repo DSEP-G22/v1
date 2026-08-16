@@ -100,6 +100,56 @@ export function useDashboard() {
   });
 }
 
+/** Submits a ticket to the intake API. Unlike every other call in this file it targets
+ *  /api/v1 (the intake service) rather than /workspace, and sends multipart rather than JSON
+ *  because the endpoint takes attachments. */
+export function useSubmitTicket() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ customerId, channel, text, files }: SubmitTicketVariables) => {
+      const form = new FormData();
+      form.append("customer_id", customerId);
+      form.append("channel", channel);
+      form.append("text", text);
+      files.forEach((file) => form.append("files", file));
+      return api.upload<{ ticket_id: string }>("/api/v1/tickets", form);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["queue"], exact: false }),
+  });
+}
+
+export interface SubmitTicketVariables {
+  customerId: string;
+  channel: string;
+  text: string;
+  files: File[];
+}
+
+export interface IntakeStatus {
+  ticket_id: string;
+  state: string;
+  department: string | null;
+  priority_score: number | null;
+  priority_band: string | null;
+}
+
+/** Polls intake status while a ticket is still moving. The intake status endpoint is
+ *  unauthenticated and cheap, so it is what the submission page watches until the pipeline
+ *  reaches a terminal state; the richer /workspace/tickets/{id} view is only fetched once the
+ *  ticket is READY_FOR_AGENT. Polling rather than the queue socket because a ticket is absent
+ *  from the queue projection until it lands there. */
+export function useIntakeStatus(ticketId: string | null) {
+  return useQuery({
+    queryKey: ["intake-status", ticketId],
+    queryFn: () => api.get<IntakeStatus>(`/api/v1/tickets/${ticketId}/status`),
+    enabled: Boolean(ticketId),
+    refetchInterval: (query) => {
+      const state = query.state.data?.state;
+      return state === "READY_FOR_AGENT" || state === "FAILED" ? false : 1_000;
+    },
+  });
+}
+
 function useTicketMutation<TVariables, TData>(
   ticketId: string,
   mutationFn: (variables: TVariables) => Promise<TData>,

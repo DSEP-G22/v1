@@ -12,6 +12,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { QueuePage } from "./pages/QueuePage";
+import { SubmitPage } from "./pages/SubmitPage";
 import { TicketPage } from "./pages/TicketPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,7 @@ const router = createBrowserRouter(
         { path: "dashboard", element: <DashboardPage /> },
         { path: "admin", element: <AdminPage /> },
         { path: "onboarding", element: <OnboardingPage /> },
+        { path: "submit", element: <SubmitPage /> },
       ],
     },
   ],

@@ -8,6 +8,9 @@ import type { CurrentUser } from "../api/types";
 
 const NAV = [
   { to: "/queue", label: "Queue", roles: ["agent", "lead", "admin"] },
+  // Customer-side intake, reachable from the workspace so a ticket can be submitted and watched
+  // end to end without a second deployable.
+  { to: "/submit", label: "Submit ticket", roles: ["agent", "lead", "admin"] },
   { to: "/dashboard", label: "Dashboard", roles: ["lead", "admin"] },
   { to: "/admin", label: "Administration", roles: ["admin"] },
   { to: "/onboarding", label: "Onboarding", roles: ["admin"] },
