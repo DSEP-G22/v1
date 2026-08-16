@@ -1,28 +1,29 @@
-# Profile definitions for APP_PROFILE. Values here are defaults; env vars / .env override them.
-# "stub" forces every *_impl field to a stub regardless of what is listed below (see
-# libs/platform/config.py), this is the CI profile of SAD §8.2.3.
+# Profile overrides. Precedence, low to high:
+#   Settings field defaults  <  this file's profile block  <  environment / .env
+#   <  the stub-profile force override in libs/platform/config.py
+#
+# The stub profile is not listed here. It is defined in code (_STUB_IMPL_FIELDS) precisely so that
+# CI cannot be broken by editing a YAML file: the stub profile must never reach the network or a
+# GPU regardless of what this file says.
 
 profiles:
-  stub:
-    asr_impl: stub
-    vlm_impl: stub
-    llm_impl: stub
-    embedder_impl: hash_stub
-    broker: inprocess
-    database_url: "sqlite+pysqlite:///./v1_data/app_stub.db"
 
+  # Local development against real models. Ollama must be running; models degrade to rules if it
+  # is not, so this profile still starts without it.
   cpu:
-    asr_impl: faster_whisper
-    vlm_impl: ollama
-    llm_impl: ollama
-    embedder_impl: sentence_transformers
-    broker: inprocess
-    database_url: "sqlite+pysqlite:///./v1_data/app.db"
+    # The frozen-embedding student, not the fine-tuned one, is the default.
+    #
+    # It is the cheaper of the two and the difference is not currently paid for: on the 958/240
+    # split it reaches department accuracy 0.838 and macro-F1 0.711 at roughly 10 ms per ticket,
+    # while fitting in seconds rather than minutes. Retraining cost is what the continuous
+    # learning loop pays repeatedly, so it dominates the choice.
+    #
+    # Switch to `distilled` once the fine-tuned student is measured to beat this on macro-F1 by
+    # a margin that justifies its training cost, and once the telecom departments have enough
+    # rows to make that comparison meaningful (see docs/17-llm-triage-distillation.md).
+    triage_model_impl: embedding
 
+  # Full stack: Kafka, Postgres, and the same real models as the cpu profile.
   full:
-    asr_impl: faster_whisper
-    vlm_impl: ollama
-    llm_impl: ollama
-    embedder_impl: sentence_transformers
+    triage_model_impl: embedding
     broker: kafka
-    database_url: "sqlite+pysqlite:///./v1_data/app.db"
