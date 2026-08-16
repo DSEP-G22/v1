@@ -9,7 +9,6 @@ from typing import Any
 
 from sqlalchemy.engine import Engine
 
-from libs.domain.contracts.analysis import RecommendationStatus
 from libs.domain.enums import DecisionType
 from libs.platform.config import Settings
 from libs.platform.db.repositories import (

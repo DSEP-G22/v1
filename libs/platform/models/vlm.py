@@ -100,7 +100,6 @@ class HeuristicLedExtractor:
 def _rgb_to_hsv(arr):
     import numpy as np
 
-    r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
     maxc = np.max(arr, axis=-1)
     minc = np.min(arr, axis=-1)
     v = maxc

@@ -92,8 +92,8 @@ def ingest_path(ports: Ports, engine: Engine, *, org_id: str, path: Path, doc_ty
         title=path.stem,
         num_chunks=len(chunks),
         avg_chunk_len=sum(lengths) / len(lengths),
-        chunks_too_short=sum(1 for l in lengths if l < 100),
-        chunks_too_long=sum(1 for l in lengths if l > CHUNK_SIZE * 1.2),
+        chunks_too_short=sum(1 for length in lengths if length < 100),
+        chunks_too_long=sum(1 for length in lengths if length > CHUNK_SIZE * 1.2),
         entities=entities,
     )
 

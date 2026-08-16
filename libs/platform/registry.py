@@ -22,6 +22,10 @@ from libs.domain.ports import (
     VectorIndexPort,
     VisualExtractorPort,
 )
+# Not re-exported from libs.domain.ports, so it is imported from its own module. The annotations
+# below are lazy (`from __future__ import annotations`), which is why the missing import never
+# raised at runtime — but get_type_hints() on Ports would.
+from libs.domain.ports.triage_model import TriageModelPort
 from libs.platform.broker.factory import build_broker
 from libs.platform.config import Settings
 from libs.platform.gateways import ConsoleMailGateway, SimulatedActionAdapter

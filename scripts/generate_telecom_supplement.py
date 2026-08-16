@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import csv
 import random
-import sys
 from pathlib import Path
 
 random.seed(22)
