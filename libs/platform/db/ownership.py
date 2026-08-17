@@ -82,7 +82,12 @@ WRITE_METHOD_OWNERS: dict[str, dict[str, set[str]]] = {
         "create": {"admin_api"},
     },
     "CustomerRepo": {
-        "create": {"admin_api"},
+        # admin_api provisions customers deliberately. intake_api also creates them, but only via
+        # the public portal endpoint, which resolves-or-creates by email: a first-time caller
+        # cannot have been provisioned in advance, and refusing the ticket until an administrator
+        # creates the record would make self-service intake impossible. The alternative — a
+        # cross-service call into admin_api — would be a worse violation of the same rule.
+        "create": {"admin_api", "intake_api"},
     },
     "DlqEntryRepo": {
         "mark_replayed": {"admin_api"},

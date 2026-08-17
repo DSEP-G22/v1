@@ -11,6 +11,7 @@ import { AdminPage } from "./pages/AdminPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
+import { PortalPage } from "./pages/PortalPage";
 import { QueuePage } from "./pages/QueuePage";
 import { SubmitPage } from "./pages/SubmitPage";
 import { TicketPage } from "./pages/TicketPage";
@@ -23,6 +24,8 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 const router = createBrowserRouter(
   [
     { path: "/login", element: <LoginPage /> },
+    // Public: a customer has no bearer token, so the portal sits outside RequireAuth.
+    { path: "/portal", element: <PortalPage /> },
     {
       path: "/",
       element: (

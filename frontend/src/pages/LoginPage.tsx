@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { ApiError, api, clearToken, setToken } from "../api/client";
 import type { CurrentUser } from "../api/types";
@@ -121,6 +121,12 @@ export function LoginPage() {
           Development tokens: <code className="font-mono">dev-agent-token</code>,{" "}
           <code className="font-mono">dev-lead-token</code>, <code className="font-mono">dev-admin-token</code>.
           Single sign-on is out of scope for v1.
+        </p>
+        <p className="mt-2 text-xs text-slate-500">
+          Are you a customer?{" "}
+          <Link to="/portal" className="font-semibold text-blue-800 hover:underline">
+            Raise a support ticket
+          </Link>
         </p>
       </div>
     </div>

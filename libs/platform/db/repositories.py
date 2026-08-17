@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
@@ -541,6 +541,16 @@ class CustomerRepo:
 
     def get(self, customer_id: str) -> Customer | None:
         return self._session.get(Customer, customer_id)
+
+    def get_by_email(self, org_id: str, email: str) -> Customer | None:
+        """Identify a returning customer by the email they typed. Scoped to the organisation
+        because email is not globally unique across tenants, and matched case-insensitively so
+        `Ada@example.com` and `ada@example.com` are one customer rather than two."""
+        return self._session.execute(
+            select(Customer).where(
+                Customer.org_id == org_id, func.lower(Customer.email) == email.strip().lower()
+            )
+        ).scalar_one_or_none()
 
 
 class DlqEntryRepo:

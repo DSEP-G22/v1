@@ -6,6 +6,8 @@ from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.engine import Engine
 
+from libs.platform.db.repositories import CustomerRepo, OrganizationRepo
+from libs.platform.db.session import session_scope
 from libs.platform.registry import Ports
 from services.intake_api.handler import (
     DuplicateIdempotencyKey,
@@ -63,6 +65,59 @@ def build_app(ports: Ports, engine: Engine) -> FastAPI:
         except TicketCreationError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"ticket_id": ticket_id}
+
+    @app.post("/api/v1/portal/tickets", status_code=202)
+    async def post_portal_ticket(
+        email: str = Form(...),
+        name: str = Form(""),
+        text: str = Form(""),
+        files: list[UploadFile] = File(default=[]),
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    ) -> dict:
+        """Customer-facing intake: identifies the customer by the email they type instead of
+        requiring a ULID they have no way of knowing.
+
+        Separate from POST /tickets rather than replacing it, because the two have different
+        callers. The agent-side endpoint takes a `customer_id` an agent has already looked up and
+        must not silently create records; this one resolves-or-creates so a first-time caller can
+        raise a ticket without an account being provisioned first.
+        """
+        address = email.strip()
+        if "@" not in address or address.startswith("@") or address.endswith("@"):
+            raise HTTPException(status_code=400, detail="a valid email address is required")
+
+        with session_scope(engine) as session:
+            org = OrganizationRepo(session).first()
+            if org is None:
+                # Nothing to attach a customer to. Seeding is a deployment step, so this is a
+                # server-side misconfiguration rather than bad input.
+                raise HTTPException(
+                    status_code=503, detail="no organization configured; run scripts/seed.py"
+                )
+            customers = CustomerRepo(session)
+            customer = customers.get_by_email(org.id, address)
+            if customer is None:
+                customer = customers.create(
+                    org_id=org.id, name=name.strip() or address.split("@")[0], email=address
+                )
+            customer_id = customer.id
+
+        inbound_files = [InboundFile(filename=f.filename or "upload", data=await f.read()) for f in files]
+        try:
+            ticket_id = create_ticket(
+                ports,
+                engine,
+                customer_id=customer_id,
+                channel="web_portal",
+                text=text,
+                files=inbound_files,
+                idempotency_key=idempotency_key,
+            )
+        except DuplicateIdempotencyKey as exc:
+            return {"ticket_id": exc.ticket_id}
+        except TicketCreationError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"ticket_id": ticket_id, "customer_id": customer_id}
 
     @app.get("/api/v1/tickets/{ticket_id}/status")
     def get_ticket_status(ticket_id: str) -> dict:
