@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
-import { API_BASE, api, getToken } from "./client";
+import { API_BASE, api, apiUrl, getToken } from "./client";
 import type {
   ActionRegistryEntry,
   CurrentUser,
@@ -123,6 +123,32 @@ export interface SubmitTicketVariables {
   channel: string;
   text: string;
   files: File[];
+}
+
+export interface SampleAudio {
+  id: string;
+  intent: string;
+  bytes: number;
+}
+
+/** Sample utterances the submission page offers so a tester is not attaching the same clip to
+ *  every ticket. Absent (empty list) until `python -m evaluation.datasets.hf_audio` has been run,
+ *  which the page treats as the picker simply not being available. */
+export function useSampleAudio() {
+  return useQuery({
+    queryKey: ["sample-audio"],
+    queryFn: () => api.get<SampleAudio[]>("/api/v1/sample-audio"),
+    staleTime: Infinity,
+    retry: false,
+  });
+}
+
+/** Fetch one sample as a File, so it enters the submit form by exactly the path a user-chosen
+ *  file would. */
+export async function fetchSampleAudioFile(id: string): Promise<File> {
+  const response = await fetch(apiUrl(`/api/v1/sample-audio/${id}`));
+  if (!response.ok) throw new Error(`sample ${id} could not be loaded`);
+  return new File([await response.blob()], `${id}.wav`, { type: "audio/wav" });
 }
 
 export interface IntakeStatus {

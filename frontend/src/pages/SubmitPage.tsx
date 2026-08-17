@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useRecorder } from "../api/useRecorder";
-import { useIntakeStatus, useSubmitTicket, useTicket } from "../api/hooks";
+import { fetchSampleAudioFile, useIntakeStatus, useSampleAudio, useSubmitTicket, useTicket } from "../api/hooks";
 import { ErrorPanel } from "../components/ErrorPanel";
 import { useToasts } from "../components/Toasts";
 
@@ -72,6 +72,9 @@ export function SubmitPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [ticketId, setTicketId] = useState<string | null>(null);
+  const [loadingSample, setLoadingSample] = useState<string | null>(null);
+
+  const samples = useSampleAudio();
 
   const status = useIntakeStatus(ticketId);
   const ready = status.data?.state === "READY_FOR_AGENT";
@@ -86,6 +89,19 @@ export function SubmitPage() {
   const stopRecording = async () => {
     const recorded = await recorder.stop();
     if (recorded) setFiles((existing) => [...existing, recorded]);
+  };
+
+  const attachSample = async (id: string) => {
+    setLoadingSample(id);
+    try {
+      const file = await fetchSampleAudioFile(id);
+      setFiles((existing) => [...existing, file]);
+      setFieldError(null);
+    } catch {
+      setFieldError("That sample could not be loaded.");
+    } finally {
+      setLoadingSample(null);
+    }
   };
 
   const onSubmit = async (event: React.FormEvent) => {
@@ -200,6 +216,31 @@ export function SubmitPage() {
             </p>
           ) : null}
         </div>
+
+        {samples.data?.length ? (
+          <div>
+            <span className="label">Or attach a sample utterance</span>
+            <p className="mt-1 text-xs text-slate-500">
+              Real 8 kHz call-centre speech from minds14, one per intent. Each is a different
+              recording, so successive tickets exercise the pipeline on genuinely different input
+              rather than re-running one clip.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {samples.data.map((sample) => (
+                <button
+                  key={sample.id}
+                  type="button"
+                  className="rounded border border-slate-300 px-2 py-1 font-mono text-[11px] hover:bg-slate-50 disabled:opacity-50"
+                  disabled={loadingSample !== null}
+                  onClick={() => void attachSample(sample.id)}
+                  title={`${sample.id} (${(sample.bytes / 1024).toFixed(0)} KB)`}
+                >
+                  {loadingSample === sample.id ? "loading…" : sample.intent.replace(/_/g, " ")}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {files.length ? (
           <ul className="space-y-1">

@@ -170,6 +170,34 @@ def materialise(output_dir: Path, limit: int = 50, split: str = "train") -> list
     return samples
 
 
+def main() -> None:
+    """Write sample utterances for the submission page to `v1_data/sample_audio/`.
+
+    One utterance per minds14 intent by default, because the point is variety: attaching the same
+    clip to every test ticket makes the pipeline look deterministic when it is responding to
+    identical input.
+
+        python -m evaluation.datasets.hf_audio [--limit 14] [--out DIR]
+    """
+    import argparse
+
+    repo_root = Path(__file__).resolve().parents[2]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--limit", type=int, default=14, help="how many utterances to write")
+    parser.add_argument("--out", type=Path, default=repo_root / "v1_data" / "sample_audio")
+    args = parser.parse_args()
+
+    samples = materialise(args.out, limit=args.limit)
+    if not samples:
+        raise SystemExit(
+            "minds14 is unavailable and nothing was written. It needs one download; after that "
+            "the HuggingFace cache serves it offline."
+        )
+    print(f"wrote {len(samples)} utterances to {args.out}")
+    for sample in samples:
+        print(f"  {sample.audio_path.name:44} {sample.duration_s:5.1f}s  {sample.intent}")
+
+
 def iter_local_fallback(sample_dir: Path) -> Iterator[AudioSample]:
     """Local sample audio, used when minds14 cannot be downloaded.
 
@@ -187,3 +215,7 @@ def iter_local_fallback(sample_dir: Path) -> Iterator[AudioSample]:
             sample_rate=0,
             duration_s=0.0,
         )
+
+
+if __name__ == "__main__":
+    main()
