@@ -53,7 +53,11 @@ services:
       - api
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.16.2
+    # Matched to the mlflow client in the venv. A 3.x client against a 2.x server fails model
+    # logging with `404 on /api/2.0/mlflow/logged-models`, an endpoint that only exists in 3.x:
+    # run metrics still arrive, so the failure looks like a promotion bug rather than a version
+    # mismatch. Keep this tag and the pyproject pin moving together.
+    image: ghcr.io/mlflow/mlflow:v3.15.1
     profiles: ["mlops", "full"]
     ports:
       - "5000:5000"
