@@ -157,6 +157,43 @@ docker compose --profile full up -d postgres kafka mlflow spark-master spark-wor
 
 ---
 
+## Running the app tier in Docker instead
+
+Everything above runs the API and UI as local processes. They can also run as containers, which
+is what `docker/Dockerfile.api` and `docker/Dockerfile.ui` build.
+
+```bash
+docker compose --profile app up -d      # API on :8000, UI on :8080
+```
+
+Three things to know before you do.
+
+**`docker compose up` on its own starts nothing.** Every service carries a `profiles:` key, so a
+bare `up` matches no service and exits reporting success. Always pass `--profile app`,
+`--profile mlops` or `--profile full`.
+
+**The API image is stub-only.** `Dockerfile.api` installs the base dependencies plus
+scikit-learn — not faster-whisper, not sentence-transformers. `APP_PROFILE=stub` is therefore the
+only profile it can serve; anything else exits at startup with
+`ModuleNotFoundError: No module named 'sentence_transformers'`. Real transcription in a container
+means adding those dependencies to the image first. This is why the container tier is for
+exercising the plumbing, and the local processes are for work where model output matters.
+
+**`.env` does not apply to the containers, and must not.** Compose interpolates `.env` from the
+project directory, so the variables that configure the *local* run were being substituted into
+the container environment: `APP_PROFILE=cpu` crashed the API as above, and
+`OLLAMA_BASE_URL=http://localhost:11434` resolved to the container itself rather than the host.
+The compose file now reads `DOCKER_`-prefixed names for these, so the two runs cannot collide:
+
+```bash
+DOCKER_APP_PROFILE=cpu docker compose --profile app up -d   # only after adding ML deps
+```
+
+Verified working: the API reports healthy, the UI serves `/`, `/portal` and `/queue` through
+nginx's SPA fallback, and a portal ticket reaches `READY_FOR_AGENT` inside the container.
+
+---
+
 ## Known issues
 
 ### Bitnami images no longer resolve
@@ -224,6 +261,22 @@ docker exec -u root cst-v1-spark-master-1 bash -lc '
 **This submit path is documented but not verified end to end.** The cluster accepts the job and
 the driver starts; the run above was stopped at the Hadoop login error rather than carried to a
 completed run. `local[*]` is the exercised path — see `16-mlops.md`.
+
+### Another server already owns port 8080
+
+Docker publishes onto a busy port without complaint, and the browser then gets the *other*
+server's responses. On this machine Apache (XAMPP) holds `:8080`, so the containerised UI appeared
+to serve `/` but 404 on `/portal` and `/queue` — those were Apache's 404s; the requests never
+reached nginx, and `docker logs cst-v1-ui-1` showed no access entries at all.
+
+Check who owns the port, then publish elsewhere:
+
+```bash
+netstat -ano | grep ":8080"        # then match the PID in Task Manager
+UI_PORT=8081 docker compose --profile app up -d
+```
+
+`UI_PORT` also feeds `CORS_ALLOW_ORIGINS`, so the API keeps accepting the UI's calls when it moves.
 
 ### Sample audio is silent
 

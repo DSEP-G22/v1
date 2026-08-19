@@ -22,11 +22,21 @@ services:
     ports:
       - "8000:8000"
     environment:
-      APP_PROFILE: ${APP_PROFILE:-stub}
-      DATABASE_URL: ${DATABASE_URL:-sqlite+pysqlite:///./v1_data/app.db}
+      # Read from DOCKER_*, not the bare names, because compose interpolates `.env` from the
+      # project directory and that file configures the *local* (non-container) run. A local
+      # `APP_PROFILE=cpu` used to leak in here and crash the container on
+      # `ModuleNotFoundError: sentence_transformers`, and a local `OLLAMA_BASE_URL=localhost`
+      # resolved to the container itself rather than the host.
+      #
+      # stub is the only profile this image can serve: Dockerfile.api installs the base
+      # dependencies plus scikit-learn, not faster-whisper or sentence-transformers. Set
+      # DOCKER_APP_PROFILE=cpu only after adding those to the image.
+      APP_PROFILE: ${DOCKER_APP_PROFILE:-stub}
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-sqlite+pysqlite:///./v1_data/app.db}
       MLFLOW_TRACKING_URI: http://mlflow:5000
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      CORS_ALLOW_ORIGINS: '["http://localhost:5300","http://localhost:8080"]'
+      OLLAMA_BASE_URL: ${DOCKER_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      # Must list the port the UI is actually published on, or the browser blocks its calls.
+      CORS_ALLOW_ORIGINS: '["http://localhost:5300","http://localhost:${UI_PORT:-8080}"]'
     volumes:
       - ./v1_data:/app/v1_data
       - ./models/artifacts:/app/models/artifacts
@@ -45,10 +55,13 @@ services:
       context: ./frontend
       dockerfile: ../docker/Dockerfile.ui
       args:
-        VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8000}
+        VITE_API_BASE: ${DOCKER_VITE_API_BASE:-http://localhost:8000}
     profiles: ["app", "full"]
     ports:
-      - "8080:80"
+      # Overridable because 8080 is a popular default: Apache/XAMPP holds it on some machines,
+      # and Docker will happily publish onto a port another server already answers on, so the
+      # browser gets that server's 404s instead of this one's SPA fallback.
+      - "${UI_PORT:-8080}:80"
     depends_on:
       - api
 

@@ -141,7 +141,12 @@ answering an API-versions probe. Two things had to change to get there — `bitn
 `bitnami/kafka:3.7` no longer exist on Docker Hub and are now pinned to `bitnamilegacy/*`. See
 `18-running-the-system.md` for the bringup sequence and the rest of the known issues.
 
-**Still unbuilt:** the two application images (`docker/Dockerfile.api`, `docker/Dockerfile.ui`).
-They are written and reviewed, and the CI workflow builds them, but neither has been built
-locally. **Submitting `spark_retrain.py` to the containerised cluster is also unverified** —
-`local[*]` is the exercised path.
+Both application images (`docker/Dockerfile.api`, `docker/Dockerfile.ui`) have since been built
+and run: `docker compose --profile app up` reaches a healthy API and serves the SPA, and a portal
+ticket runs end to end inside the container. See `18-running-the-system.md` for the caveats that
+came out of doing it — chiefly that the API image is stub-only, and that `.env` leaks into
+compose interpolation.
+
+**Submitting `spark_retrain.py` to the containerised cluster is still unverified** — `local[*]`
+is the exercised path. Note that it needs JDK 17 or 21 on `JAVA_HOME`; on a machine defaulting to
+a newer JDK it fails with `ClassNotFoundException: jdk.internal.ref.Cleaner`.
