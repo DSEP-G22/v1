@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     kafka_bootstrap: str = "localhost:9092"
 
     ollama_base_url: str = "http://localhost:11434"
-    llm_model: str = "llama3.1:8b-instruct-q4_K_M"
+    llm_model: str = "qwen2.5:7b-instruct-q4_K_M"
     vlm_model: str = "llava:7b"
     llm_timeout_s: float = 60.0
     llm_num_ctx: int = 8192

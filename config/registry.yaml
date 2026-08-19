@@ -8,7 +8,7 @@ roles:
     model_version: "llava:7b"
   llm:
     impl: ollama
-    model_version: "llama3.1:8b-instruct-q4_K_M"
+    model_version: "qwen2.5:7b-instruct-q4_K_M"
   embedder:
     impl: sentence_transformers
     model_version: "sentence-transformers/all-MiniLM-L6-v2"
