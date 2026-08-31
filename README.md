@@ -222,6 +222,69 @@ a fabricated result.
 | `09_unified_dataset` | Fuses Bitext text, real Whisper transcripts of minds14 telephony and router LED scenarios into `UnifiedTicketPayload`-shaped records, then asserts modality coherence and provenance spans | `data/processed/unified_dataset.jsonl` |
 | `10_llm_triage_and_students` | Labels those payloads with a teacher LLM, then trains and compares two ways of serving that judgement cheaply: a fine-tuned DistilBERT and logistic heads on frozen sentence embeddings | `data/processed/distillation_dataset.jsonl`, `models/artifacts/{distilled,embedding}_triage/` |
 
+### Performance metrics
+
+Measured numbers as recorded by the notebooks in `evaluation/reports/metrics.jsonl` and the model
+artifact configs. Read them together with the caveats in the next section: several are optimistic
+for reasons that have nothing to do with the models.
+
+**Department classification** (notebook 02, 2,729 test rows)
+
+| Model | Val macro-F1 | Test macro-F1 |
+|---|---|---|
+| LinearSVC (calibrated) — selected | 1.000 | 1.000 |
+
+**Triage students** (notebook 10, 958 train / 240 held-out payloads, teacher `gpt-oss:120b-cloud`)
+
+| Model | Dept acc | Dept macro-F1 | Band acc | Sentiment acc | Latency |
+|---|---|---|---|---|---|
+| Frozen MiniLM-L6 embeddings + logistic heads | 0.838 | 0.711 | 0.854 | 0.804 | 70.4 ms |
+| Fine-tuned DistilBERT | 0.796 | 0.423 | 0.846 | 0.817 | — |
+
+The embedding heads win on every macro-averaged metric at a fraction of the training cost, which
+is why they are the default served triage model. Accuracy here means agreement with the teacher.
+
+**Retrieval** (notebook 07, 40 question-to-chunk pairs)
+
+| Configuration | Recall@5 | MRR |
+|---|---|---|
+| `all-MiniLM-L6-v2` | 0.900 | 0.668 |
+| `all-MiniLM-L12-v2` | 0.900 | 0.658 |
+
+Fault identification over the same corpus: dense-only 1.000, dense plus graph expansion 0.857.
+The graph store earns its place on multi-hop questions, not on this flat retrieval measure.
+
+**ASR** (notebook 06, faster-whisper, 689.6 s of real telephony speech)
+
+| Model size | Latency per audio-minute | Segments | Mean segment confidence |
+|---|---|---|---|
+| `tiny` | 2.62 s | 131 | 0.666 |
+| `base` | 5.84 s | 221 | 0.675 |
+
+Recommended low-confidence threshold 0.6. No WER: neither sample has a reference transcript.
+
+**Priority calibration** (notebook 04): Cohen's kappa against labelled band targets improves from
+0.646 with the default weights to 0.704 after grid search. Sentiment lexicon accuracy 0.75.
+
+**End-to-end pipeline** (notebook 08, 100 synthetic multimodal tickets, `APP_PROFILE=stub`)
+
+| Measure | Value |
+|---|---|
+| Tickets completed | 100 / 100, none timed out |
+| Wall clock | 4.51 s |
+| Throughput | 22.2 tickets/s |
+| JSON validity rate | 1.000 |
+
+| Stage | p50 | p95 | Mean |
+|---|---|---|---|
+| `PROCESSING` → `AGGREGATED` | 2,625 ms | 3,980 ms | 2,426 ms |
+| `AGGREGATED` → `TRIAGED` | 118 ms | 363 ms | 150 ms |
+| `TRIAGED` → `DIAGNOSED` | 97 ms | 431 ms | 159 ms |
+| `DIAGNOSED` → `READY_FOR_AGENT` | 93 ms | 681 ms | 186 ms |
+
+Ingestion dominates: it fans out ASR, vision and text processing before aggregation. The three
+downstream stages together cost less than a fifth of it.
+
 ### Reading the numbers honestly
 
 The saved classifier reports macro-F1 1.0. **Do not treat that as a real generalisation
