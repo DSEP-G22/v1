@@ -36,6 +36,9 @@ class _DraftOut(BaseModel):
     ai_text: str = ""
 
 
+_FALLBACK_DRAFT = "Hi, thanks for reaching out, we're looking into this now."
+
+
 def _to_registry_entries(rows) -> list[action_selection_policy.ActionRegistryEntry]:
     return [
         action_selection_policy.ActionRegistryEntry(
@@ -92,7 +95,10 @@ def handle(ports: Ports, engine: Engine, settings: Settings, envelope: EventEnve
         logger.exception("response_svc: draft generation failed ticket_id=%s", ticket_id)
         draft_out = _DraftOut(ai_text="")
 
-    ai_text = draft_out.ai_text or "Hi, thanks for reaching out, we're looking into this now."
+    ai_text = draft_out.ai_text.strip()
+    ai_generated = bool(ai_text)
+    if not ai_generated:
+        ai_text = _FALLBACK_DRAFT
     findings = compliance_policy.check(ai_text)
 
     registry_entries = _to_registry_entries(registry_rows)
@@ -108,7 +114,7 @@ def handle(ports: Ports, engine: Engine, settings: Settings, envelope: EventEnve
             current_text=ai_text,
             revision=1,
             findings=[f.model_dump(mode="json") for f in findings],
-            ai_generated=True,
+            ai_generated=ai_generated,
         )
 
         if recommendation is not None:

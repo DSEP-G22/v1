@@ -93,7 +93,9 @@ export function ActPanel({ ticket, user }: { ticket: TicketDetail; user: Current
 
       {/* UI-7: persistent, not dismissible. */}
       <p role="note" className="rounded border border-amber-400 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
-        AI-generated, review before sending.
+        {ticket.draft?.ai_generated === false
+          ? "Template draft (LLM unavailable), review before sending."
+          : "AI-generated, review before sending."}
       </p>
 
       <div className="card p-4">

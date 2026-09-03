@@ -8,9 +8,15 @@ from pathlib import Path
 from libs.domain.contracts.media import AudioTranscript, Segment
 
 
+_NO_TRANSCRIPT_TEXT = (
+    "Transcript unavailable in stub mode; provide a .txt sidecar next to the audio "
+    "for deterministic testing without inventing a customer report."
+)
+
+
 class StubTranscriber:
-    """Returns a fixed transcript. If a `.txt` sidecar file exists next to the audio, its
-    contents are used verbatim (lets tests/demos control the transcript without a real model)."""
+    """Returns a transcript only when a `.txt` sidecar exists. Without one, it avoids inventing
+    a customer claim and returns a neutral placeholder instead."""
 
     def __init__(self, model_version: str = "stub-asr-1.0", low_confidence_threshold: float = 0.60) -> None:
         self._model_version = model_version
@@ -18,9 +24,12 @@ class StubTranscriber:
 
     def transcribe(self, audio_path: Path, attachment_id: str) -> AudioTranscript:
         sidecar = Path(audio_path).with_suffix(".txt")
-        text = sidecar.read_text(encoding="utf-8").strip() if sidecar.exists() else (
-            "Stub transcript: customer reports the router's power light is red and the internet is down."
-        )
+        if sidecar.exists():
+            text = sidecar.read_text(encoding="utf-8").strip()
+        else:
+            text = _NO_TRANSCRIPT_TEXT
+        if not text:
+            text = _NO_TRANSCRIPT_TEXT
         confidence = 0.92
         return AudioTranscript(
             attachment_id=attachment_id,
@@ -47,7 +56,7 @@ class FasterWhisperTranscriber:
         self._threshold = low_confidence_threshold
 
     def transcribe(self, audio_path: Path, attachment_id: str) -> AudioTranscript:
-        segments_iter, info = self._model.transcribe(str(audio_path), language=None)
+        segments_iter, info = self._model.transcribe(str(audio_path), language=None, task="translate")
         segments: list[Segment] = []
         weighted_conf_sum = 0.0
         total_duration = 0.0

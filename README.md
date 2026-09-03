@@ -17,8 +17,12 @@ Two processes. Backend:
 ```bash
 uv venv --python 3.12 .venv
 uv pip install -e ".[dev]" --python .venv
-APP_PROFILE=stub .venv/Scripts/python.exe scripts/seed.py --reset
-APP_PROFILE=stub .venv/Scripts/python.exe -m runtime.local        # http://localhost:8000
+$env:APP_PROFILE="stub"; .\.venv\Scripts\python.exe scripts\seed.py --reset
+$env:APP_PROFILE="stub"; .\.venv\Scripts\python.exe -m runtime.local
+   # http://localhost:8000
+$env:APP_PROFILE="cpu"
+$env:DATABASE_URL="sqlite+pysqlite:///C:/Users/USER/Desktop/dsep/v1/v1_data/app.db"
+.\.venv\Scripts\python.exe -m runtime.local
 ```
 
 Frontend:
@@ -34,10 +38,10 @@ Sign in with `dev-agent-token`, `dev-lead-token` or `dev-admin-token`.
 `APP_PROFILE=stub` needs no GPU, no Ollama and no network. Set `APP_PROFILE=cpu` with
 `ollama serve` running for real models. Details in `docs/01-setup.md`.
 
-Note that on `stub` a voice message is **not** transcribed: the stub transcriber substitutes a
-fixed sentence, so the pipeline looks healthy while ignoring the audio. Use `cpu` whenever the
-output matters. To bring up MLflow, Spark, Kafka and Postgres as well, see
-`docs/18-running-the-system.md`.
+Note that on `stub` a voice message is **not** transcribed unless a `.txt` sidecar exists next to
+that audio. In the absence of real transcription data, the stub transcriber returns a neutral
+placeholder instead of inventing a customer report. Use `cpu` whenever the output matters. To
+bring up MLflow, Spark, Kafka and Postgres as well, see `docs/18-running-the-system.md`.
 
 ## Architecture
 

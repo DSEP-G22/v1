@@ -182,26 +182,25 @@ class OllamaGenerator:
 
 
 class StubGenerator:
-    """Deterministic canned JSON keyed by a `prompt_kind` opt, used by CI (`llm_impl=stub`)."""
+    """Deterministic JSON for CI, but it never invents facts that were not supplied in the
+    prompt. The stub exists for execution-path coverage, not for customer-facing claims."""
 
     _CANNED: dict[str, dict[str, Any]] = {
         "diagnosis": {
-            "intent": "report_fault",
-            "fault": "fault_power_supply",
-            "confidence": 0.82,
-            "alternatives": ["fault_firmware_crashloop"],
-            "rationale": "Solid red power LED reported in both audio and image evidence.",
-            "citations": [{"chunk_id": "c1", "chunk_version": 1, "relevance": 0.9}],
+            "intent": "needs_review",
+            "fault": "unknown",
+            "confidence": 0.0,
+            "alternatives": [],
+            "rationale": "Stub mode: no real model output was produced, so the claim is intentionally left neutral.",
+            "citations": [],
         },
         "draft": {
-            "ai_text": "Hi, thanks for reaching out. We can see your router's power LED is showing red. "
-            "Please try power-cycling the router by unplugging it for 30 seconds. "
-            "If that doesn't help we'll arrange a replacement power supply.",
+            "ai_text": "Thanks for reaching out. We are reviewing the reported issue and will follow up with the next steps.",
         },
         "classify": {
-            "department": "network_operations",
-            "confidence": 0.9,
-            "alternatives": [["technical_support", 0.05]],
+            "department": "general",
+            "confidence": 0.0,
+            "alternatives": [],
         },
     }
 

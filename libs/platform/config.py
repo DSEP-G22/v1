@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     llm_num_ctx: int = 8192
 
     asr_impl: str = "faster_whisper"
-    asr_model: str = "base"
+    asr_model: str = "small"
     vlm_impl: str = "ollama"
     llm_impl: str = "ollama"
     embedder_impl: str = "sentence_transformers"
