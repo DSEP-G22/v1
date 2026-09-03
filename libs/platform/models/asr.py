@@ -56,7 +56,9 @@ class FasterWhisperTranscriber:
         self._threshold = low_confidence_threshold
 
     def transcribe(self, audio_path: Path, attachment_id: str) -> AudioTranscript:
-        segments_iter, info = self._model.transcribe(str(audio_path), language=None, task="translate")
+        segments_iter, info = self._model.transcribe(
+            str(audio_path), language=None, task="translate", vad_filter=True
+        )
         segments: list[Segment] = []
         weighted_conf_sum = 0.0
         total_duration = 0.0
